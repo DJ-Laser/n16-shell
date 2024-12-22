@@ -1,7 +1,13 @@
-use iced::widget::{button, column, text, Column};
+use iced::{
+  theme,
+  widget::{button, column, text, Column},
+  Theme,
+};
 
 fn main() -> Result<(), iced::Error> {
-  iced::run("A cool counter", Counter::update, Counter::view)
+  iced::application("A cool counter", Counter::update, Counter::view)
+    .theme(|_| Theme::Dark)
+    .run()
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -31,7 +37,9 @@ impl Counter {
     column![
       button("+").on_press(Message::Increment),
       text(self.value),
-      button("-").on_press(Message::Decrement)
+      button("-")
+        .on_press(Message::Decrement)
+        .style(|theme: &Theme, status: button::Status| button::danger(theme, status))
     ]
   }
 }
