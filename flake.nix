@@ -25,7 +25,7 @@
         };
       in {
         devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [rustToolchain alejandra wasm-pack node2nix nodejs];
+          buildInputs = with pkgs; [rustToolchain alejandra];
           shellHook = ''
             export RUST_SRC_PATH =${rustToolchain}/lib/rustlib/src/rust/src
           '';
