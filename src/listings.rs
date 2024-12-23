@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use iced::widget::image;
 
 pub mod applications;

@@ -1,12 +1,15 @@
-use iced::widget::{button, column, text, Column};
-use iced::Theme;
+use iced::widget::{column, scrollable};
+use iced::{Element, Task, Theme};
 use iced_layershell::build_pattern::{application, MainSettings};
 use iced_layershell::reexport::Anchor;
 use iced_layershell::settings::LayerShellSettings;
 use iced_layershell::to_layer_message;
+
+use component::listing;
 use listings::applications::ApplicationProvider;
 use listings::Provider;
 
+mod component;
 pub mod listings;
 
 fn main() -> Result<(), iced_layershell::Error> {
@@ -21,36 +24,38 @@ fn main() -> Result<(), iced_layershell::Error> {
       },
       ..Default::default()
     })
-    .run()
+    .run_with(|| (Counter::new(), Task::none()))
 }
 
 #[to_layer_message]
 #[derive(Debug, Clone, Copy)]
 enum Message {
-  Increment,
-  Decrement,
+  Init,
 }
 
 #[derive(Default)]
 struct Counter {
-  value: i64,
+  provider: ApplicationProvider,
 }
 
 impl Counter {
+  fn new() -> Self {
+    Self {
+      provider: ApplicationProvider::new(),
+    }
+  }
+
   fn update(&mut self, message: Message) {
     match message {
-      Message::Increment => {
-        self.value += 1;
-      }
-      Message::Decrement => {
-        self.value -= 1;
+      Message::Init => {
+        self.provider.update_listings();
       }
 
       _ => todo!(),
     }
   }
 
-  fn view(&self) -> Column<Message> {
+  fn view(&self) -> Element<'_, Message> {
     let mut provider = ApplicationProvider::new();
     provider.update_listings();
 
@@ -58,27 +63,9 @@ impl Counter {
     let mut lines = column![];
 
     for listing in apps {
-      lines = lines.push(text(listing.name().to_string()));
-      lines = lines.push(button("hai"));
-      println!("hai");
+      lines = lines.push(listing::view(listing));
     }
 
-    lines
-  }
-}
-
-#[cfg(test)]
-mod tests {
-  #[test]
-  fn it_counts_properly() {
-    use super::*;
-
-    let mut counter = Counter { value: 0 };
-
-    counter.update(Message::Increment);
-    counter.update(Message::Increment);
-    counter.update(Message::Decrement);
-
-    assert_eq!(counter.value, 1);
+    scrollable(lines).into()
   }
 }

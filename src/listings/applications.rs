@@ -64,25 +64,25 @@ impl Provider for ApplicationProvider {
     let locales = desktop::get_languages_from_env();
     let locales = &locales[..];
     let entries = desktop::Iter::new(desktop::default_paths()).entries(Some(locales));
-    let applications = entries
-      .filter_map(move |entry| {
-        if !matches!(entry.type_(), Some("Application")) || entry.no_display() {
-          return None;
-        }
+    let applications = entries.filter_map(move |entry| {
+      if !matches!(entry.type_(), Some("Application")) || entry.no_display() {
+        return None;
+      }
 
-        let name = entry.name(locales)?;
-        let icon = entry.icon().map(|path| image::Handle::from_path(path));
-        let exec = entry.exec();
+      let name = entry.name(locales)?;
+      let icon = entry.icon().map(|path| image::Handle::from_path(path));
+      let exec = entry.exec();
 
-        println!("{:?}  {:?} exec:{:?}", name, get_section(&entry), exec);
+      println!("{:?}  {:?} exec:{:?}", name, get_section(&entry), exec);
 
-        return Some(Listing {
-          name: name.to_string(),
-          icon,
-          runnable: exec.is_some(),
-        });
-      })
-      .count();
+      return Some(Listing {
+        name: name.to_string(),
+        icon,
+        runnable: exec.is_some(),
+      });
+    });
+
+    self.listings = applications.collect();
   }
 
   fn listings(&self) -> Vec<Listing> {
