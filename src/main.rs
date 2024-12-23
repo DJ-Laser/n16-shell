@@ -10,9 +10,6 @@ use listings::Provider;
 pub mod listings;
 
 fn main() -> Result<(), iced_layershell::Error> {
-  let mut provider = ApplicationProvider::new();
-  provider.update_listings();
-
   application("A cool counter", Counter::update, Counter::view)
     .theme(|_| Theme::Dark)
     .settings(MainSettings {
@@ -54,13 +51,19 @@ impl Counter {
   }
 
   fn view(&self) -> Column<Message> {
-    column![
-      button("+").on_press(Message::Increment),
-      text(self.value),
-      button("-")
-        .on_press(Message::Decrement)
-        .style(|theme: &Theme, status: button::Status| button::danger(theme, status))
-    ]
+    let mut provider = ApplicationProvider::new();
+    provider.update_listings();
+
+    let apps = provider.listings();
+    let mut lines = column![];
+
+    for listing in apps {
+      lines = lines.push(text(listing.name().to_string()));
+      lines = lines.push(button("hai"));
+      println!("hai");
+    }
+
+    lines
   }
 }
 

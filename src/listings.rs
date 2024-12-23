@@ -38,6 +38,20 @@ pub struct Listing {
   icon: Option<image::Handle>,
 }
 
+impl Listing {
+  pub fn name(&self) -> &str {
+    &self.name
+  }
+
+  pub fn runnable(&self) -> bool {
+    self.runnable
+  }
+
+  pub fn icon(&self) -> Option<&image::Handle> {
+    self.icon.as_ref()
+  }
+}
+
 #[derive(Clone)]
 pub struct SectionMeta {
   title: String,
