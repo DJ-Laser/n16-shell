@@ -1,12 +1,12 @@
+use std::process;
+
 use super::{Listing, Provider};
 use freedesktop_desktop_entry::{self as desktop, DesktopEntry};
 use iced::widget::image;
+use listing::ListingData;
 use phf::phf_map;
 
-#[derive(Default)]
-pub struct ApplicationProvider {
-  listings: Vec<Listing>,
-}
+mod listing;
 
 static CATEGORY_TO_SECTION: phf::Map<&'static str, &'static str> = phf_map! {
   "Game" => "Gaming",
@@ -43,6 +43,11 @@ fn get_section(entry: &DesktopEntry) -> &'static str {
     .expect("Should have a fallback section name")
 }
 
+#[derive(Default)]
+pub struct ApplicationProvider {
+  listings: Vec<ListingData>,
+}
+
 impl Provider for ApplicationProvider {
   fn new() -> Self {
     Self::default()
@@ -70,15 +75,16 @@ impl Provider for ApplicationProvider {
       }
 
       let name = entry.name(locales)?;
-      let icon = entry.icon().map(|path| image::Handle::from_path(path));
       let exec = entry.exec();
+      let icon = entry.icon().and_then(|name| {
+        let path = freedesktop_icons::lookup(name).with_size(48).find()?;
+        Some(image::Handle::from_path(path))
+      });
 
-      println!("{:?}  {:?} exec:{:?}", name, get_section(&entry), exec);
-
-      return Some(Listing {
+      return Some(ListingData {
         name: name.to_string(),
         icon,
-        runnable: exec.is_some(),
+        command: exec.map(str::to_string),
       });
     });
 
@@ -86,6 +92,21 @@ impl Provider for ApplicationProvider {
   }
 
   fn listings(&self) -> Vec<Listing> {
-    self.listings.clone()
+    self.listings.iter().map(|l| l.into()).collect()
+  }
+
+  fn execute(&self, listing_index: usize) {
+    let listing = &self.listings[listing_index];
+    let command = listing
+      .command
+      .as_ref()
+      .expect("Should not run listings with executable: false");
+
+    let args: Vec<&str> = command.split_ascii_whitespace().collect();
+
+    match process::Command::new(args[0]).args(&args[1..]).spawn() {
+      Err(error) => panic!("{}", error),
+      Ok(_) => (),
+    };
   }
 }

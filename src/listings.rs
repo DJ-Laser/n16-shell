@@ -2,7 +2,7 @@ use iced::widget::image;
 
 pub mod applications;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ProviderMeta {
   id: &'static str,
   name: &'static str,
@@ -20,6 +20,8 @@ pub trait Provider {
   fn update_listings(&mut self);
   fn listings(&self) -> Vec<Listing>;
 
+  fn execute(&self, listing_index: usize);
+
   fn meta() -> ProviderMeta {
     ProviderMeta {
       id: Self::id(),
@@ -29,11 +31,13 @@ pub trait Provider {
   }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Listing {
   name: String,
-  runnable: bool,
+  executable: bool,
   icon: Option<image::Handle>,
+  // Should be the id of the provider that created it
+  provider: &'static str,
 }
 
 impl Listing {
@@ -41,8 +45,8 @@ impl Listing {
     &self.name
   }
 
-  pub fn runnable(&self) -> bool {
-    self.runnable
+  pub fn executable(&self) -> bool {
+    self.executable
   }
 
   pub fn icon(&self) -> Option<&image::Handle> {
@@ -50,12 +54,16 @@ impl Listing {
   }
 }
 
-#[derive(Clone)]
+#[derive(Debug)]
+pub enum SectionKind {}
+
+#[derive(Debug, Clone)]
 pub struct SectionMeta {
   title: String,
   priority: i32,
 }
 
+#[derive(Debug)]
 pub struct Section<'a> {
   listings: Vec<&'a Listing>,
 }

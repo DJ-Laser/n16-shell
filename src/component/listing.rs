@@ -1,17 +1,24 @@
-use iced::widget::{horizontal_space, image, row, text, Row};
+use iced::widget::{button, horizontal_space, image, row, text, Button};
 use iced::Length;
 
 use crate::listings::Listing;
 
-pub fn view(listing: Listing) -> Row<'static, crate::Message> {
+pub fn view(listing: Listing, on_press: crate::Message) -> Button<'static, crate::Message> {
   let mut row = row![];
-  if let Some(icon) = listing.icon() {
-    row = row.push(image(icon));
+
+  let i = listing.icon();
+  if let Some(icon) = i {
+    let image = image(icon).width(20).height(20);
+    row = row.push(image);
   } else {
-    row = row.push(horizontal_space());
+    let space = horizontal_space().width(20).height(20);
+    row = row.push(space);
   };
 
-  row = row.push(text(listing.name().to_string()));
+  let text = text(listing.name().to_string()).size(20);
+  row = row.push(text).padding(2);
 
-  row.width(Length::Fill)
+  button(row.width(Length::Fill))
+    .style(button::text)
+    .on_press(on_press)
 }
