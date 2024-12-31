@@ -1,11 +1,11 @@
-use iced::widget::{column, container, scrollable, text};
+use iced::widget::{column, container, horizontal_rule, scrollable};
 use iced::{color, Element, Subscription, Task};
 use iced_layershell::build_pattern::{application, MainSettings};
 use iced_layershell::reexport::Anchor;
 use iced_layershell::settings::LayerShellSettings;
 use iced_layershell::to_layer_message;
 
-use component::listing;
+use component::{listing, search};
 use listings::applications::ApplicationProvider;
 use listings::Provider;
 use theme::Base16Theme;
@@ -106,9 +106,14 @@ impl Launcher {
       scrollable(listings).direction(scrollable::Direction::Vertical(
         scrollable::Scrollbar::default().width(0).scroller_width(0),
       )),
-    )
-    .padding(5);
+    );
 
-    column![text("Testing"), listings_container].into()
+    let column = column![
+      search::view("").into(),
+      horizontal_rule(20),
+      listings_container
+    ];
+
+    container(column).padding(10).into()
   }
 }

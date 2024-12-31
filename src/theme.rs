@@ -3,8 +3,10 @@ use iced::Color;
 pub mod application;
 pub mod button;
 pub mod container;
+pub mod rule;
 pub mod scrollable;
 pub mod text;
+pub mod text_input;
 
 #[derive(Debug)]
 #[allow(non_snake_case)]
