@@ -102,7 +102,10 @@ impl Provider for ApplicationProvider {
       .as_ref()
       .expect("Should not run listings with executable: false");
 
-    let args: Vec<&str> = command.split_ascii_whitespace().collect();
+    let args: Vec<&str> = command
+      .split_ascii_whitespace()
+      .filter_map(|s| if s.starts_with('%') { None } else { Some(s) })
+      .collect();
 
     match process::Command::new(args[0]).args(&args[1..]).spawn() {
       Err(error) => panic!("{}", error),
