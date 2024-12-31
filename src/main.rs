@@ -107,7 +107,7 @@ impl Launcher {
         scrollable::Scrollbar::default().width(0).scroller_width(0),
       )),
     )
-    .padding(2);
+    .padding(5);
 
     column![text("Testing"), listings_container].into()
   }

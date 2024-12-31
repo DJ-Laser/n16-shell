@@ -1,5 +1,5 @@
 use iced::widget::{button, horizontal_space, image, row, text};
-use iced::{Background, Length};
+use iced::{alignment, Background, Length};
 
 use crate::listings::Listing;
 use crate::theme::{self, Base16Theme};
@@ -7,21 +7,30 @@ use crate::theme::{self, Base16Theme};
 use super::Component;
 
 pub fn view(listing: Listing, on_press: crate::Message) -> impl Into<Component> {
-  let mut row = row![];
+  let image_size = 30;
+  let font_size = 20;
+
+  let mut row = row![]
+    .align_y(alignment::Vertical::Center)
+    .width(Length::Fill);
 
   let i = listing.icon();
   if let Some(icon) = i {
-    let image = image(icon).width(20).height(20);
+    let image = image(icon).width(image_size).height(image_size);
     row = row.push(image);
   } else {
-    let space = horizontal_space().width(20).height(20);
+    let space = horizontal_space().width(image_size).height(image_size);
     row = row.push(space);
   };
 
-  let text = text(listing.name().to_string()).size(20);
-  row = row.push(text).padding(2);
+  row = row.push(
+    text(listing.name().to_string())
+      .align_y(alignment::Vertical::Center)
+      .height(image_size)
+      .size(font_size),
+  );
 
-  button(row.width(Length::Fill))
+  button(row)
     .style(|theme: &Base16Theme, status| {
       let base = button::Style {
         background: Some(Background::Color(theme.base00)),
