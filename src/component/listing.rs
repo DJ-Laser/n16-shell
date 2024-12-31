@@ -1,5 +1,5 @@
 use iced::widget::{button, horizontal_space, image, row, text};
-use iced::{alignment, Background, Length};
+use iced::{alignment, Length};
 
 use crate::listings::Listing;
 use crate::theme::{self, Base16Theme};
@@ -12,12 +12,13 @@ pub fn view(listing: Listing, on_press: crate::Message) -> impl Into<Component> 
 
   let mut row = row![]
     .align_y(alignment::Vertical::Center)
-    .width(Length::Fill);
+    .width(Length::Fill)
+    .spacing(10);
 
   let i = listing.icon();
   if let Some(icon) = i {
     let image = image(icon).width(image_size).height(image_size);
-    row = row.push(image);
+    row = row.push(image)
   } else {
     let space = horizontal_space().width(image_size).height(image_size);
     row = row.push(space);
@@ -31,16 +32,17 @@ pub fn view(listing: Listing, on_press: crate::Message) -> impl Into<Component> 
   );
 
   button(row)
+    .padding([5, 0])
     .style(|theme: &Base16Theme, status| {
       let base = button::Style {
-        background: Some(Background::Color(theme.base00)),
+        background: Some(theme.base00.into()),
         ..theme::button::base(theme)
       };
 
       match status {
         button::Status::Active | button::Status::Pressed => base,
         button::Status::Hovered => button::Style {
-          background: Some(Background::Color(theme.base01)),
+          background: Some(theme.base01.into()),
           ..base
         },
         button::Status::Disabled => theme::button::disabled(base),

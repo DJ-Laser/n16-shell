@@ -1,5 +1,5 @@
+use iced::border;
 use iced::widget::button::{Catalog, Status, Style, StyleFn};
-use iced::{border, Background};
 
 use super::Base16Theme;
 
@@ -12,7 +12,7 @@ impl Catalog for Base16Theme {
       match status {
         Status::Active | Status::Pressed => base,
         Status::Hovered => Style {
-          background: Some(Background::Color(theme.base02)),
+          background: Some(theme.base02.into()),
           ..base
         },
         Status::Disabled => disabled(base),
@@ -27,7 +27,7 @@ impl Catalog for Base16Theme {
 
 pub fn base(theme: &Base16Theme) -> Style {
   Style {
-    background: Some(Background::Color(theme.base01)),
+    background: Some(theme.base01.into()),
     text_color: theme.base05,
     border: border::rounded(2),
     ..Style::default()

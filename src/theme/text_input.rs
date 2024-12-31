@@ -1,7 +1,5 @@
-use iced::{
-  widget::text_input::{Catalog, Status, Style, StyleFn},
-  Background, Border,
-};
+use iced::widget::text_input::{Catalog, Status, Style, StyleFn};
+use iced::Border;
 
 use super::Base16Theme;
 
@@ -19,11 +17,11 @@ impl Catalog for Base16Theme {
 
 pub fn base(theme: &Base16Theme, status: Status) -> Style {
   let active = Style {
-    background: Background::Color(theme.base00),
+    background: theme.base00.into(),
     border: Border {
       radius: 2.0.into(),
-      width: 1.0,
-      color: theme.base0C,
+      width: 0.0,
+      color: theme.base00,
     },
     icon: theme.base06,
     placeholder: theme.base03,
@@ -34,21 +32,15 @@ pub fn base(theme: &Base16Theme, status: Status) -> Style {
   match status {
     Status::Active => active,
     Status::Hovered => Style {
-      border: Border {
-        //color: palette.background.base.text,
-        ..active.border
-      },
+      border: Border { ..active.border },
       ..active
     },
     Status::Focused => Style {
-      border: Border {
-        //color: palette.primary.strong.color,
-        ..active.border
-      },
+      border: Border { ..active.border },
       ..active
     },
     Status::Disabled => Style {
-      background: Background::Color(theme.base01),
+      background: theme.base01.into(),
       value: active.placeholder,
       ..active
     },

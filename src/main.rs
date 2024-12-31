@@ -1,5 +1,6 @@
-use iced::widget::{column, container, horizontal_rule, scrollable};
-use iced::{color, Element, Subscription, Task};
+use component::search::{preprocess_query, SEARCH_INPUT_ID};
+use iced::widget::{column, container, horizontal_rule, scrollable, text_input};
+use iced::{color, gradient, Element, Length, Subscription, Task};
 use iced_layershell::build_pattern::{application, MainSettings};
 use iced_layershell::reexport::Anchor;
 use iced_layershell::settings::LayerShellSettings;
@@ -50,22 +51,25 @@ fn main() -> Result<(), iced_layershell::Error> {
 }
 
 #[to_layer_message]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 enum Message {
   Init,
   ListingClicked(usize),
+  SearchQueryChanged(String),
   Exit,
 }
 
 #[derive(Default)]
 struct Launcher {
   provider: ApplicationProvider,
+  query: String,
 }
 
 impl Launcher {
   fn new() -> Self {
     Self {
       provider: ApplicationProvider::new(),
+      query: String::new(),
     }
   }
 
@@ -80,12 +84,17 @@ impl Launcher {
     match message {
       Message::Init => {
         self.provider.update_listings();
-        Task::none()
+        text_input::focus(SEARCH_INPUT_ID)
       }
 
       Message::ListingClicked(idx) => {
         self.provider.execute(idx);
         Task::done(Message::Exit)
+      }
+
+      Message::SearchQueryChanged(query) => {
+        self.query = query;
+        Task::none()
       }
 
       Message::Exit => iced_runtime::task::effect(iced_runtime::Action::Exit),
@@ -95,7 +104,11 @@ impl Launcher {
   }
 
   fn view(&self) -> Element<'_, Message, Base16Theme> {
-    let apps = self.provider.listings();
+    let apps =
+      self.provider.listings().into_iter().filter(|listing| {
+        preprocess_query(listing.name()).contains(&preprocess_query(&self.query))
+      });
+    println!("{:?}", &self.query);
     let mut listings = column![];
 
     for (idx, listing) in apps.into_iter().enumerate() {
@@ -109,11 +122,31 @@ impl Launcher {
     );
 
     let column = column![
-      search::view("").into(),
+      search::view(&self.query).into(),
       horizontal_rule(20),
       listings_container
     ];
 
-    container(column).padding(10).into()
+    let inner = container(column)
+      .height(Length::Fill)
+      .padding(10)
+      .style(|theme| container::Style {
+        background: Some(theme.base00.into()),
+        ..Default::default()
+      });
+
+    container(inner)
+      .padding(4)
+      .style(|theme| {
+        let gradient = gradient::Linear::new(50)
+          .add_stop(0.0, theme.base0D)
+          .add_stop(1.0, theme.base0E);
+
+        container::Style {
+          background: Some(gradient.into()),
+          ..Default::default()
+        }
+      })
+      .into()
   }
 }
