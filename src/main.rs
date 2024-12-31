@@ -104,14 +104,18 @@ impl Launcher {
   }
 
   fn view(&self) -> Element<'_, Message, Base16Theme> {
-    let apps =
-      self.provider.listings().into_iter().filter(|listing| {
+    let apps = self
+      .provider
+      .listings()
+      .into_iter()
+      .enumerate()
+      .filter(|(_idx, listing)| {
         preprocess_query(listing.name()).contains(&preprocess_query(&self.query))
       });
     println!("{:?}", &self.query);
     let mut listings = column![];
 
-    for (idx, listing) in apps.into_iter().enumerate() {
+    for (idx, listing) in apps.into_iter() {
       listings = listings.push(listing::view(listing, Message::ListingClicked(idx)));
     }
 
