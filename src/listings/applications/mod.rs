@@ -1,7 +1,6 @@
-use std::process;
+use std::{path::PathBuf, process};
 
 use super::{Listing, Provider};
-use base_dirs::get_data_dirs;
 use freedesktop_desktop_entry::{self as desktop, DesktopEntry};
 use iced::widget::image;
 use icons::get_icon;
@@ -9,7 +8,6 @@ use listing::ListingData;
 use phf::phf_map;
 use xdg::BaseDirectories;
 
-mod base_dirs;
 mod icons;
 mod listing;
 
@@ -46,6 +44,14 @@ fn get_section(entry: &DesktopEntry) -> &'static str {
   CATEGORY_TO_SECTION
     .get("$NO_MATCHES")
     .expect("Should have a fallback section name")
+}
+
+pub fn get_data_dirs(env: &BaseDirectories) -> Vec<PathBuf> {
+  let mut data_dirs: Vec<PathBuf> = vec![];
+  data_dirs.push(env.get_data_home());
+  data_dirs.append(&mut env.get_data_dirs());
+
+  data_dirs
 }
 
 #[derive(Default)]
