@@ -31,8 +31,6 @@ pub struct Base16Hex<'a> {
 
 impl<'a> Base16Hex<'a> {
   pub fn parse(self) -> Option<Base16Theme> {
-    println!("{:?}", self.base0B);
-    println!("{:?}", Color::parse(self.base0B));
     Some(Base16Theme {
       base00: Color::parse(self.base00)?,
       base02: Color::parse(self.base00)?,

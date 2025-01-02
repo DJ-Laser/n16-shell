@@ -112,7 +112,6 @@ impl Launcher {
       .filter(|(_idx, listing)| {
         preprocess_query(listing.name()).contains(&preprocess_query(&self.query))
       });
-    println!("{:?}", &self.query);
     let mut listings = column![];
 
     for (idx, listing) in apps.into_iter() {
