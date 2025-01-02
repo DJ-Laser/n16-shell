@@ -1,11 +1,16 @@
 use std::process;
 
 use super::{Listing, Provider};
+use base_dirs::get_data_dirs;
 use freedesktop_desktop_entry::{self as desktop, DesktopEntry};
 use iced::widget::image;
+use icons::get_icon;
 use listing::ListingData;
 use phf::phf_map;
+use xdg::BaseDirectories;
 
+mod base_dirs;
+mod icons;
 mod listing;
 
 static CATEGORY_TO_SECTION: phf::Map<&'static str, &'static str> = phf_map! {
@@ -66,20 +71,19 @@ impl Provider for ApplicationProvider {
   }
 
   fn update_listings(&mut self) {
-    let locales = desktop::get_languages_from_env();
-    let locales = &locales[..];
+    let data_dirs = get_data_dirs(&BaseDirectories::new().unwrap());
+    let locales = &desktop::get_languages_from_env()[..];
+
     let entries = desktop::Iter::new(desktop::default_paths()).entries(Some(locales));
+
     let applications = entries.filter_map(move |entry| {
       if !matches!(entry.type_(), Some("Application")) || entry.no_display() {
         return None;
       }
 
+      let icon = get_icon(&entry, &data_dirs).map(image::Handle::from_path);
       let name = entry.name(locales)?;
       let exec = entry.exec();
-      let icon = entry.icon().and_then(|name| {
-        let path = freedesktop_icons::lookup(name).with_size(48).find()?;
-        Some(image::Handle::from_path(path))
-      });
 
       return Some(ListingData {
         name: name.to_string(),

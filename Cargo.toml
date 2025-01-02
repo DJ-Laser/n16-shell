@@ -5,8 +5,8 @@ edition = "2021"
 
 [dependencies]
 freedesktop-desktop-entry = "0.7.5"
-freedesktop-icons = "0.2.6"
 iced = { version = "0.13.1", features = ["image"] }
 iced_layershell = "0.13.0"
 iced_runtime = "0.13.2"
 phf = "0.11.2"
+xdg = "2.5.2"
