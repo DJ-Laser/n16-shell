@@ -6,7 +6,7 @@ use std::{
 
 use freedesktop_desktop_entry::DesktopEntry;
 
-pub fn get_size_dirs(theme_dir: PathBuf) -> io::Result<Vec<PathBuf>> {
+fn get_size_dirs(theme_dir: PathBuf) -> io::Result<Vec<PathBuf>> {
   let mut scale_dirs = Vec::new();
   let files = fs::read_dir(theme_dir)?;
 
@@ -30,10 +30,6 @@ pub fn get_size_dirs(theme_dir: PathBuf) -> io::Result<Vec<PathBuf>> {
 fn find_icon_in_dir(icon_name: &str, dir: PathBuf) -> io::Result<Option<PathBuf>> {
   for entry in fs::read_dir(dir)? {
     let path = entry?.path();
-
-    if icon_name == "Alacritty" {
-      println!("{:?}", path);
-    }
 
     let file_stem = match path.file_stem() {
       Some(file_stem) => file_stem,

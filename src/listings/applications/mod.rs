@@ -4,6 +4,7 @@ use super::{Listing, Provider};
 use freedesktop_desktop_entry::{self as desktop, DesktopEntry};
 use iced::widget::image;
 use icons::get_icon;
+use itertools::Itertools;
 use listing::ListingData;
 use phf::phf_map;
 use xdg::BaseDirectories;
@@ -80,9 +81,10 @@ impl Provider for ApplicationProvider {
     let data_dirs = get_data_dirs(&BaseDirectories::new().unwrap());
     let locales = &desktop::get_languages_from_env()[..];
 
-    let entries = desktop::Iter::new(desktop::default_paths()).entries(Some(locales));
+    let entries =
+      desktop::Iter::new(data_dirs.iter().map(|p| p.join("applications"))).entries(Some(locales));
 
-    let applications = entries.filter_map(move |entry| {
+    let applications = entries.unique().filter_map(move |entry| {
       if !matches!(entry.type_(), Some("Application")) || entry.no_display() {
         return None;
       }
