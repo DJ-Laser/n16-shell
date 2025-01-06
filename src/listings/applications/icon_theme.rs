@@ -60,7 +60,7 @@ impl IconTheme {
   }
 }
 
-const FALLBACK_THEME: &'static str = "hicolor";
+pub const FALLBACK_THEME: &'static str = "hicolor";
 
 fn find_theme_directories(theme_directory: &Path) -> Option<IconTheme> {
   let mut directories = Vec::new();

@@ -1,12 +1,12 @@
 use std::{
-  collections::HashMap,
+  collections::{HashMap, HashSet},
   fs, io,
   path::{Path, PathBuf},
 };
 
 use freedesktop_desktop_entry::DesktopEntry;
 
-use super::icon_theme::IconTheme;
+use super::icon_theme::{IconTheme, FALLBACK_THEME};
 
 fn find_icon_in_dir(icon_name: &str, dir: &Path) -> io::Result<Option<PathBuf>> {
   for entry in fs::read_dir(dir)? {
@@ -25,11 +25,11 @@ fn find_icon_in_dir(icon_name: &str, dir: &Path) -> io::Result<Option<PathBuf>> 
   Ok(None)
 }
 
-fn get_icon_for_theme<'v>(
+fn get_icon_for_theme<'s>(
   icon_name: &str,
-  desired_theme: &str,
-  icon_themes: &'v HashMap<String, IconTheme>,
-  searched_themes: &mut Vec<&'v String>,
+  desired_theme: &'s str,
+  icon_themes: &'s HashMap<String, IconTheme>,
+  searched_themes: &mut HashSet<&'s str>,
 ) -> Option<PathBuf> {
   if let Some(icon_theme) = icon_themes.get(desired_theme) {
     for size_dir in icon_theme.directories() {
@@ -43,7 +43,7 @@ fn get_icon_for_theme<'v>(
 
     // If the icon was not found, search it's inherited themes
     for inherited in icon_theme.inherits() {
-      if searched_themes.contains(&inherited) {
+      if searched_themes.contains(&inherited.as_str()) {
         continue;
       }
 
@@ -51,8 +51,14 @@ fn get_icon_for_theme<'v>(
         return Some(icon);
       }
 
-      searched_themes.push(inherited);
+      searched_themes.insert(inherited);
     }
+
+    searched_themes.insert(desired_theme);
+  }
+
+  if !searched_themes.contains(FALLBACK_THEME) {
+    return get_icon_for_theme(icon_name, &FALLBACK_THEME, icon_themes, searched_themes);
   }
 
   None
@@ -72,7 +78,8 @@ pub fn get_icon<'a>(
   }
 
   // Search in XDG icon dirs
-  if let Some(icon) = get_icon_for_theme(icon_name, desired_theme, icon_themes, &mut Vec::new()) {
+  let icon = get_icon_for_theme(icon_name, desired_theme, icon_themes, &mut HashSet::new());
+  if let Some(icon) = icon {
     return Some(icon);
   }
 
