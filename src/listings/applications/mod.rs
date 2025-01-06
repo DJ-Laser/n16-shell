@@ -1,8 +1,9 @@
-use std::{path::PathBuf, process};
+use std::{ffi::OsStr, path::PathBuf, process};
 
-use super::{Listing, Provider};
+use super::{Listing, ListingIcon, Provider};
 use freedesktop_desktop_entry::{self as desktop, DesktopEntry};
 use iced::widget::image;
+use iced_runtime::core::svg;
 use icon_theme::get_icon_themes;
 use icons::get_icon;
 use itertools::Itertools;
@@ -93,7 +94,13 @@ impl Provider for ApplicationProvider {
         return None;
       }
 
-      let icon = get_icon(&entry, &icon_themes, &data_dirs).map(image::Handle::from_path);
+      let icon = get_icon(&entry, &icon_themes, &data_dirs).map(|path| {
+        if matches!(path.extension().and_then(OsStr::to_str), Some("svg")) {
+          ListingIcon::Vector(svg::Handle::from_path(path))
+        } else {
+          ListingIcon::Bitmap(image::Handle::from_path(path))
+        }
+      });
       let name = entry.name(locales)?;
       let exec = entry.exec();
 

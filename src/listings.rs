@@ -1,4 +1,4 @@
-use iced::widget::image;
+use iced::widget::{image, svg};
 
 pub mod applications;
 
@@ -32,10 +32,16 @@ pub trait Provider {
 }
 
 #[derive(Debug, Clone)]
+pub enum ListingIcon {
+  Bitmap(image::Handle),
+  Vector(svg::Handle),
+}
+
+#[derive(Debug, Clone)]
 pub struct Listing {
   name: String,
   executable: bool,
-  icon: Option<image::Handle>,
+  icon: Option<ListingIcon>,
   // Should be the id of the provider that created it
   provider: &'static str,
 }
@@ -49,8 +55,8 @@ impl Listing {
     self.executable
   }
 
-  pub fn icon(&self) -> Option<&image::Handle> {
-    self.icon.as_ref()
+  pub fn icon(&self) -> &Option<ListingIcon> {
+    &self.icon
   }
 }
 

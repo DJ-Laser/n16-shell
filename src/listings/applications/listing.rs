@@ -1,12 +1,10 @@
-use iced::widget::image;
-
 use super::ApplicationProvider;
-use crate::listings::{Listing, Provider};
+use crate::listings::{Listing, ListingIcon, Provider};
 
 #[derive(Debug)]
 pub struct ListingData {
   pub name: String,
-  pub icon: Option<image::Handle>,
+  pub icon: Option<ListingIcon>,
   pub command: Option<String>,
 }
 

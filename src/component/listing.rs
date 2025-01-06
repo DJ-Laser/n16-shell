@@ -1,7 +1,7 @@
-use iced::widget::{button, horizontal_space, image, row, text};
+use iced::widget::{button, horizontal_space, image, row, svg, text};
 use iced::{alignment, Length};
 
-use crate::listings::Listing;
+use crate::listings::{Listing, ListingIcon};
 use crate::theme::{self, Base16Theme};
 
 use super::Component;
@@ -15,14 +15,20 @@ pub fn view(listing: Listing, on_press: crate::Message) -> impl Into<Component> 
     .width(Length::Fill)
     .spacing(10);
 
-  let i = listing.icon();
-  if let Some(icon) = i {
-    let image = image(icon).width(image_size).height(image_size);
-    row = row.push(image)
-  } else {
-    let space = horizontal_space().width(image_size).height(image_size);
-    row = row.push(space);
-  };
+  match listing.icon() {
+    Some(ListingIcon::Bitmap(handle)) => {
+      let image = image(handle).width(image_size).height(image_size);
+      row = row.push(image);
+    }
+    Some(ListingIcon::Vector(handle)) => {
+      let svg = svg(handle.clone()).width(image_size).height(image_size);
+      row = row.push(svg);
+    }
+    None => {
+      let space = horizontal_space().width(image_size).height(image_size);
+      row = row.push(space);
+    }
+  }
 
   row = row.push(
     text(listing.name().to_string())
