@@ -6,6 +6,7 @@ pub struct ListingData {
   pub name: String,
   pub icon: Option<ListingIcon>,
   pub command: Option<String>,
+  pub id: usize,
 }
 
 impl Into<Listing> for &ListingData {
@@ -15,6 +16,7 @@ impl Into<Listing> for &ListingData {
       icon: self.icon.clone(),
       executable: self.command.is_some(),
       provider: ApplicationProvider::id(),
+      id: self.id,
     }
   }
 }

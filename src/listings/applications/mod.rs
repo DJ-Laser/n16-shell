@@ -89,7 +89,7 @@ impl Provider for ApplicationProvider {
     let entries =
       desktop::Iter::new(data_dirs.iter().map(|p| p.join("applications"))).entries(Some(locales));
 
-    let applications = entries.unique().filter_map(move |entry| {
+    let applications = entries.unique().enumerate().filter_map(move |(id, entry)| {
       if !matches!(entry.type_(), Some("Application")) || entry.no_display() {
         return None;
       }
@@ -108,6 +108,7 @@ impl Provider for ApplicationProvider {
         name: name.to_string(),
         icon,
         command: exec.map(str::to_string),
+        id,
       });
     });
 
@@ -118,8 +119,16 @@ impl Provider for ApplicationProvider {
     self.listings.iter().map(|l| l.into()).collect()
   }
 
-  fn execute(&self, listing_index: usize) {
-    let listing = &self.listings[listing_index];
+  fn execute(&self, listing_id: usize) {
+    let listing = &self.listings.iter().find(|data| data.id == listing_id);
+    let listing = match listing {
+      Some(listing) => listing,
+      None => panic!(
+        "Attempted to execute listing with nonexistent id: {}",
+        listing_id
+      ),
+    };
+
     let command = listing
       .command
       .as_ref()

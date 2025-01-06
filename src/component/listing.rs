@@ -6,7 +6,7 @@ use crate::theme::{self, Base16Theme};
 
 use super::Component;
 
-pub fn view(listing: Listing, on_press: crate::Message) -> impl Into<Component> {
+pub fn view(listing: Listing, selected: bool, on_press: crate::Message) -> impl Into<Component> {
   let image_size = 30;
   let font_size = 20;
 
@@ -39,18 +39,24 @@ pub fn view(listing: Listing, on_press: crate::Message) -> impl Into<Component> 
 
   button(row)
     .padding([5, 0])
-    .style(|theme: &Base16Theme, status| {
+    .style(move |theme: &Base16Theme, status| {
       let base = button::Style {
         background: Some(theme.base00.into()),
         ..theme::button::base(theme)
       };
 
       match status {
-        button::Status::Active | button::Status::Pressed => base,
+        _ if selected => button::Style {
+          background: Some(theme.base01.into()),
+          ..base
+        },
+
         button::Status::Hovered => button::Style {
           background: Some(theme.base01.into()),
           ..base
         },
+
+        button::Status::Active | button::Status::Pressed => base,
         button::Status::Disabled => theme::button::disabled(base),
       }
     })

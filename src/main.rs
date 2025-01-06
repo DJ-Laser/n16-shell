@@ -1,4 +1,6 @@
 use component::search::{preprocess_query, SEARCH_INPUT_ID};
+use iced::keyboard::key;
+use iced::widget::scrollable::AbsoluteOffset;
 use iced::widget::{column, container, horizontal_rule, scrollable, text_input};
 use iced::{color, gradient, Element, Length, Subscription, Task};
 use iced_layershell::build_pattern::{application, MainSettings};
@@ -8,7 +10,7 @@ use iced_layershell::to_layer_message;
 
 use component::{listing, search};
 use listings::applications::ApplicationProvider;
-use listings::Provider;
+use listings::{Listing, Provider};
 use theme::Base16Theme;
 
 mod component;
@@ -56,34 +58,71 @@ enum Message {
   Init,
   ListingClicked(usize),
   SearchQueryChanged(String),
+  SelectNextListing,
+  SelectPrevListing,
+  RunSelected,
   Exit,
 }
 
 #[derive(Default)]
 struct Launcher {
   provider: ApplicationProvider,
+  listings: Vec<Listing>,
   query: String,
+  selected_idx: usize,
 }
 
 impl Launcher {
   fn new() -> Self {
     Self {
       provider: ApplicationProvider::new(),
+      listings: Vec::new(),
       query: String::new(),
+      selected_idx: 0,
     }
   }
 
   fn subscription(&self) -> Subscription<Message> {
     iced::event::listen_with(|event, _status, _window| match event {
       iced::Event::Window(iced::window::Event::Unfocused) => Some(Message::Exit),
+      iced::Event::Keyboard(iced::keyboard::Event::KeyPressed { key, .. }) => match key {
+        iced::keyboard::Key::Named(key::Named::ArrowUp) => Some(Message::SelectPrevListing),
+        iced::keyboard::Key::Named(key::Named::ArrowDown) => Some(Message::SelectNextListing),
+        iced::keyboard::Key::Named(key::Named::Enter) => Some(Message::RunSelected),
+        _ => None,
+      },
       _ => None,
     })
+  }
+
+  const SCROLLABLE_ID: &'static str = "LISTING_SCROLL_AREA";
+
+  fn scroll_to_selected(&self) -> Task<Message> {
+    scrollable::scroll_to(
+      scrollable::Id::new(Self::SCROLLABLE_ID),
+      AbsoluteOffset {
+        x: 0.0,
+        y: (40 * self.selected_idx) as f32,
+      },
+    )
+  }
+
+  fn filter_listings(&mut self) {
+    self.listings.clear();
+
+    let listings =
+      self.provider.listings().into_iter().filter(|listing| {
+        preprocess_query(listing.name()).contains(&preprocess_query(&self.query))
+      });
+
+    self.listings.extend(listings);
   }
 
   fn update(&mut self, message: Message) -> Task<Message> {
     match message {
       Message::Init => {
         self.provider.update_listings();
+        self.filter_listings();
         text_input::focus(SEARCH_INPUT_ID)
       }
 
@@ -92,9 +131,26 @@ impl Launcher {
         Task::done(Message::Exit)
       }
 
+      Message::RunSelected => {
+        self.provider.execute(self.selected_idx);
+        Task::done(Message::Exit)
+      }
+
       Message::SearchQueryChanged(query) => {
         self.query = query;
+        self.selected_idx = 0;
+        self.filter_listings();
         Task::none()
+      }
+
+      Message::SelectNextListing => {
+        self.selected_idx += 1;
+        self.scroll_to_selected()
+      }
+
+      Message::SelectPrevListing => {
+        self.selected_idx = self.selected_idx.saturating_sub(1);
+        self.scroll_to_selected()
       }
 
       Message::Exit => iced_runtime::task::effect(iced_runtime::Action::Exit),
@@ -104,24 +160,24 @@ impl Launcher {
   }
 
   fn view(&self) -> Element<'_, Message, Base16Theme> {
-    let apps = self
-      .provider
-      .listings()
-      .into_iter()
-      .enumerate()
-      .filter(|(_idx, listing)| {
-        preprocess_query(listing.name()).contains(&preprocess_query(&self.query))
-      });
     let mut listings = column![];
 
-    for (idx, listing) in apps.into_iter() {
-      listings = listings.push(listing::view(listing, Message::ListingClicked(idx)));
+    for listing in self.listings.clone().into_iter() {
+      let id = listing.id();
+      let selected = id == self.selected_idx;
+      listings = listings.push(listing::view(
+        listing,
+        selected,
+        Message::ListingClicked(id),
+      ));
     }
 
     let listings_container: container::Container<'_, Message, Base16Theme> = container(
-      scrollable(listings).direction(scrollable::Direction::Vertical(
-        scrollable::Scrollbar::default().width(0).scroller_width(0),
-      )),
+      scrollable(listings)
+        .id(scrollable::Id::new(Self::SCROLLABLE_ID))
+        .direction(scrollable::Direction::Vertical(
+          scrollable::Scrollbar::default().width(0).scroller_width(0),
+        )),
     );
 
     let column = column![

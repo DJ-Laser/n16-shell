@@ -20,7 +20,7 @@ pub trait Provider {
   fn update_listings(&mut self);
   fn listings(&self) -> Vec<Listing>;
 
-  fn execute(&self, listing_index: usize);
+  fn execute(&self, listing_id: usize);
 
   fn meta() -> ProviderMeta {
     ProviderMeta {
@@ -44,6 +44,8 @@ pub struct Listing {
   icon: Option<ListingIcon>,
   // Should be the id of the provider that created it
   provider: &'static str,
+  // Unique id for use with Provider::execute
+  id: usize,
 }
 
 impl Listing {
@@ -57,6 +59,10 @@ impl Listing {
 
   pub fn icon(&self) -> &Option<ListingIcon> {
     &self.icon
+  }
+
+  pub fn id(&self) -> usize {
+    self.id
   }
 }
 
