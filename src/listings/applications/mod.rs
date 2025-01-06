@@ -3,12 +3,14 @@ use std::{path::PathBuf, process};
 use super::{Listing, Provider};
 use freedesktop_desktop_entry::{self as desktop, DesktopEntry};
 use iced::widget::image;
+use icon_theme::get_icon_themes;
 use icons::get_icon;
 use itertools::Itertools;
 use listing::ListingData;
 use phf::phf_map;
 use xdg::BaseDirectories;
 
+mod icon_theme;
 mod icons;
 mod listing;
 
@@ -79,6 +81,8 @@ impl Provider for ApplicationProvider {
 
   fn update_listings(&mut self) {
     let data_dirs = get_data_dirs(&BaseDirectories::new().unwrap());
+    let icon_themes = get_icon_themes(&data_dirs);
+
     let locales = &desktop::get_languages_from_env()[..];
 
     let entries =
@@ -89,7 +93,7 @@ impl Provider for ApplicationProvider {
         return None;
       }
 
-      let icon = get_icon(&entry, &data_dirs).map(image::Handle::from_path);
+      let icon = get_icon(&entry, &icon_themes, &data_dirs).map(image::Handle::from_path);
       let name = entry.name(locales)?;
       let exec = entry.exec();
 

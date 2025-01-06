@@ -5,8 +5,10 @@ edition = "2021"
 
 [dependencies]
 freedesktop-desktop-entry = "0.7.5"
-iced = { version = "0.13.1", features = ["image"] }
+iced = { version = "0.13.1", features = ["image", "svg"] }
 iced_layershell = "0.13.0"
 iced_runtime = "0.13.2"
+itertools = "0.14.0"
 phf = "0.11.2"
+tini = "1.3.0"
 xdg = "2.5.2"
