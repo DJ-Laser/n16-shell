@@ -1,4 +1,5 @@
 use std::{
+  collections::HashMap,
   fs, io,
   path::{Path, PathBuf},
 };
@@ -224,8 +225,8 @@ fn get_icon_theme_dirs(icons_dir: &Path) -> io::Result<Vec<PathBuf>> {
   Ok(theme_dirs)
 }
 
-pub fn get_icon_themes(data_dirs: &Vec<PathBuf>) -> Vec<IconTheme> {
-  let mut themes: Vec<IconTheme> = Vec::new();
+pub fn get_icon_themes(data_dirs: &Vec<PathBuf>) -> HashMap<String, IconTheme> {
+  let mut themes: HashMap<String, IconTheme> = HashMap::new();
 
   for data_dir in data_dirs {
     let theme_dirs = match get_icon_theme_dirs(&data_dir.join("icons")) {
@@ -236,10 +237,21 @@ pub fn get_icon_themes(data_dirs: &Vec<PathBuf>) -> Vec<IconTheme> {
     for theme_dir in theme_dirs {
       let icon_theme = parse_theme_index(&theme_dir);
 
-      if let Some(icon_theme) = icon_theme {
-        themes.push(icon_theme);
+      if let Some(mut icon_theme) = icon_theme {
+        if let Some(prev_theme) = themes.get_mut(icon_theme.directory_name()) {
+          prev_theme.directories.append(&mut icon_theme.directories);
+
+          for inherited in icon_theme.inherits {
+            if !prev_theme.inherits.contains(&inherited) {
+              prev_theme.inherits.push(inherited);
+            }
+          }
+        } else {
+          themes.insert(icon_theme.directory_name.clone(), icon_theme);
+        }
       }
     }
   }
+
   themes
 }

@@ -94,7 +94,7 @@ impl Provider for ApplicationProvider {
         return None;
       }
 
-      let icon = get_icon(&entry, &icon_themes, &data_dirs).map(|path| {
+      let icon = get_icon(&entry, "hicolor", &icon_themes, &data_dirs).map(|path| {
         if matches!(path.extension().and_then(OsStr::to_str), Some("svg")) {
           ListingIcon::Vector(svg::Handle::from_path(path))
         } else {
