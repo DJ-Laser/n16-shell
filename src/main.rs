@@ -132,7 +132,7 @@ impl Launcher {
       }
 
       Message::RunSelected => {
-        self.provider.execute(self.selected_idx);
+        self.provider.execute(self.listings[self.selected_idx].id());
         Task::done(Message::Exit)
       }
 
@@ -144,12 +144,22 @@ impl Launcher {
       }
 
       Message::SelectNextListing => {
-        self.selected_idx += 1;
+        if self.selected_idx >= self.listings.len() - 1 {
+          self.selected_idx = 0;
+        } else {
+          self.selected_idx += 1;
+        }
+
         self.scroll_to_selected()
       }
 
       Message::SelectPrevListing => {
-        self.selected_idx = self.selected_idx.saturating_sub(1);
+        if self.selected_idx == 0 {
+          self.selected_idx = self.listings.len() - 1;
+        } else {
+          self.selected_idx -= 1;
+        }
+
         self.scroll_to_selected()
       }
 
@@ -162,13 +172,13 @@ impl Launcher {
   fn view(&self) -> Element<'_, Message, Base16Theme> {
     let mut listings = column![];
 
-    for listing in self.listings.clone().into_iter() {
-      let id = listing.id();
-      let selected = id == self.selected_idx;
+    for (index, listing) in self.listings.clone().into_iter().enumerate() {
+      let selected = index == self.selected_idx;
+      let listing_id = listing.id();
       listings = listings.push(listing::view(
         listing,
         selected,
-        Message::ListingClicked(id),
+        Message::ListingClicked(listing_id),
       ));
     }
 
