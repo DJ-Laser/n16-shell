@@ -6,7 +6,7 @@ use std::{
 
 use freedesktop_desktop_entry::DesktopEntry;
 
-use super::icon_theme::{IconTheme, FALLBACK_THEME};
+use super::icon_theme::{IconTheme, IconType, FALLBACK_THEME};
 
 fn find_icon_in_dir(icon_name: &str, dir: &Path) -> io::Result<Option<PathBuf>> {
   for entry in fs::read_dir(dir)? {
@@ -32,12 +32,48 @@ fn get_icon_for_theme<'s>(
   searched_themes: &mut HashSet<&'s str>,
 ) -> Option<PathBuf> {
   if let Some(icon_theme) = icon_themes.get(desired_theme) {
+    let desired_size = 48;
+    let mut best_icon = None;
+    let mut best_size_delta = i32::MAX;
+
     for size_dir in icon_theme.directories() {
       let icon = match find_icon_in_dir(icon_name, size_dir.full_path()) {
         Ok(Some(icon)) => icon,
         Ok(None) | Err(_) => continue,
       };
 
+      let size_delta = match size_dir.icon_type() {
+        IconType::Fixed => {
+          let icon_size = size_dir.size() * size_dir.scale();
+          (icon_size - desired_size).abs()
+        }
+        IconType::Threshold(threshold) => {
+          let icon_size = size_dir.size() * size_dir.scale();
+          let mut size_delta = (icon_size - desired_size).abs();
+          if size_delta <= *threshold {
+            size_delta = 0;
+          }
+
+          size_delta
+        }
+        IconType::Scalable { max_size, min_size } => {
+          if desired_size < *min_size {
+            (min_size - desired_size).abs()
+          } else if desired_size > *max_size {
+            (max_size - desired_size).abs()
+          } else {
+            0
+          }
+        }
+      };
+
+      if size_delta < best_size_delta {
+        best_icon = Some(icon);
+        best_size_delta = size_delta;
+      }
+    }
+
+    if let Some(icon) = best_icon {
       return Some(icon);
     }
 
