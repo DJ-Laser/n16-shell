@@ -47,7 +47,7 @@
         };
 
         packages.default = pkgs.rustPlatform.buildRustPackage {
-          pname = "icylauncher";
+          pname = "n16-shell";
           version = "0.1.0";
 
           src = ./.;
