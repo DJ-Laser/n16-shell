@@ -1,7 +1,6 @@
 use component::search::{preprocess_query, SEARCH_INPUT_ID};
 use iced::keyboard::key;
-use iced::widget::scrollable::AbsoluteOffset;
-use iced::widget::{column, container, horizontal_rule, scrollable, text_input};
+use iced::widget::{column, container, horizontal_rule, text_input};
 use iced::{color, gradient, Element, Length, Subscription, Task};
 use iced_layershell::build_pattern::{application, MainSettings};
 use iced_layershell::reexport::Anchor;
@@ -16,6 +15,7 @@ use theme::Base16Theme;
 mod component;
 pub mod listings;
 pub mod theme;
+mod widget;
 
 fn main() -> Result<(), iced_layershell::Error> {
   let theme = Base16Theme {
@@ -89,22 +89,15 @@ impl Launcher {
         iced::keyboard::Key::Named(key::Named::ArrowUp) => Some(Message::SelectPrevListing),
         iced::keyboard::Key::Named(key::Named::ArrowDown) => Some(Message::SelectNextListing),
         iced::keyboard::Key::Named(key::Named::Enter) => Some(Message::RunSelected),
+        iced::keyboard::Key::Named(key::Named::Escape) => Some(Message::Exit),
         _ => None,
       },
       _ => None,
     })
   }
 
-  const SCROLLABLE_ID: &'static str = "LISTING_SCROLL_AREA";
-
   fn scroll_to_selected(&self) -> Task<Message> {
-    scrollable::scroll_to(
-      scrollable::Id::new(Self::SCROLLABLE_ID),
-      AbsoluteOffset {
-        x: 0.0,
-        y: (40 * self.selected_idx) as f32,
-      },
-    )
+    Task::none()
   }
 
   fn filter_listings(&mut self) {
@@ -170,7 +163,9 @@ impl Launcher {
   }
 
   fn view(&self) -> Element<'_, Message, Base16Theme> {
-    let mut listings = column![];
+    let mut listings = scrolled_column![]
+      .height(Length::Fill)
+      .view_child(self.selected_idx);
 
     for (index, listing) in self.listings.clone().into_iter().enumerate() {
       let selected = index == self.selected_idx;
@@ -182,23 +177,15 @@ impl Launcher {
       ));
     }
 
-    let listings_container: container::Container<'_, Message, Base16Theme> = container(
-      scrollable(listings)
-        .id(scrollable::Id::new(Self::SCROLLABLE_ID))
-        .direction(scrollable::Direction::Vertical(
-          scrollable::Scrollbar::default().width(0).scroller_width(0),
-        )),
-    );
-
     let column = column![
       search::view(&self.query).into(),
       horizontal_rule(20),
-      listings_container
+      listings
     ];
 
     let inner = container(column)
       .height(Length::Fill)
-      .padding(10)
+      .padding(8)
       .style(|theme| container::Style {
         background: Some(theme.base00.into()),
         ..Default::default()
