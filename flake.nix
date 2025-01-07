@@ -1,7 +1,6 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
     rust-overlay.url = "github:oxalica/rust-overlay";
     rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
   };
@@ -9,12 +8,10 @@
   outputs = {
     self,
     nixpkgs,
-    flake-utils,
     rust-overlay,
   } @ inputs:
-    flake-utils.lib.eachDefaultSystem
-    (
-      system: let
+      let
+        system = "x86_64-linux";
         overlays = [(import rust-overlay)];
         pkgs = import nixpkgs {inherit system overlays;};
         lib = pkgs.lib;
@@ -38,7 +35,7 @@
           libxkbcommon
         ];
       in {
-        devShells.default = pkgs.mkShell {
+        devShells.${system}.default = pkgs.mkShell {
           buildInputs = with pkgs; [rustToolchain alejandra] ++ icedDeps;
           shellHook = ''
             export RUST_SRC_PATH =${rustToolchain}/lib/rustlib/src/rust/src
@@ -46,7 +43,7 @@
           '';
         };
 
-        packages.default = pkgs.rustPlatform.buildRustPackage {
+        packages.${system}.n16-shell = pkgs.rustPlatform.buildRustPackage {
           pname = "n16-shell";
           version = "0.1.0";
 
@@ -56,6 +53,12 @@
             lockFile = ./Cargo.lock;
           };
         };
-      }
-    );
+
+        defaultPackage.${system} = self.packages.${system}.n16-shell;
+
+        overlays.default = final: prev: {
+          n16-shell = self.packages.${system}.n16-shell;
+        };
+      };
+    
 }
