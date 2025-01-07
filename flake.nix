@@ -45,6 +45,17 @@
             export LD_LIBRARY_PATH=${lib.makeLibraryPath icedDeps}:$LD_LIBRARY_PATH
           '';
         };
+
+        packages.default = pkgs.rustPlatform.buildRustPackage {
+          pname = "icylauncher";
+          version = "0.1.0";
+
+          src = ./.;
+
+          cargoLock = {
+            lockFile = ./Cargo.lock;
+          };
+        };
       }
     );
 }
