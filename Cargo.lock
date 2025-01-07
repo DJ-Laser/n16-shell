@@ -1770,20 +1770,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "icylauncher"
-version = "0.1.0"
-dependencies = [
- "freedesktop-desktop-entry",
- "iced",
- "iced_layershell",
- "iced_runtime",
- "itertools",
- "phf",
- "tini",
- "xdg",
-]
-
-[[package]]
 name = "ident_case"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2148,6 +2134,20 @@ name = "mutate_once"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "16cf681a23b4d0a43fc35024c176437f9dcd818db34e0f42ab456a0ee5ad497b"
+
+[[package]]
+name = "n16-shell"
+version = "0.1.0"
+dependencies = [
+ "freedesktop-desktop-entry",
+ "iced",
+ "iced_layershell",
+ "iced_runtime",
+ "itertools",
+ "phf",
+ "tini",
+ "xdg",
+]
 
 [[package]]
 name = "naga"
