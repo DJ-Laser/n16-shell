@@ -25,9 +25,10 @@ n16-shell is written in rust for better compatibility with niri and because rust
   - **(Future)** Slides up from bottom on keybind activation
   - **(Future)** Shows niri workspaces and open applications
 
-##
+## Technologies used
 
 - **iced:** ui framework (https://crates.io/crates/iced)
 - **iced_layershell:** iced integration with the wayland compositor (https://crates.io/crates/iced_layershell)
 - **freedesktop-desktop-entry:** find and parse desktop entries (https://crates.io/crates/freedesktop-desktop-entry)
 - **tini:** parser for XDG standard ini files, including icon themes (https://crates.io/crates/tini)
+- **nix (❤️):** provides a reproducible dev environment and package build
