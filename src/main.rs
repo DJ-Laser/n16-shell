@@ -167,7 +167,7 @@ impl Launcher {
       .height(Length::Fill)
       .view_child(self.selected_idx);
 
-    for (index, listing) in self.listings.clone().into_iter().enumerate() {
+    for (index, listing) in self.listings.iter().enumerate() {
       let selected = index == self.selected_idx;
       let listing_id = listing.id();
       listings = listings.push(listing::view(

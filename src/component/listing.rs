@@ -6,7 +6,7 @@ use crate::theme::{self, Base16Theme};
 
 use super::Component;
 
-pub fn view(listing: Listing, selected: bool, on_press: crate::Message) -> impl Into<Component> {
+pub fn view(listing: &Listing, selected: bool, on_press: crate::Message) -> impl Into<Component> {
   let image_size = 30;
   let font_size = 20;
 
