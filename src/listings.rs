@@ -75,7 +75,32 @@ pub struct SectionMeta {
   priority: i32,
 }
 
+impl SectionMeta {
+  pub fn title(&self) -> &str {
+    &self.title
+  }
+
+  pub fn priority(&self) -> i32 {
+    self.priority
+  }
+}
+
 #[derive(Debug)]
 pub struct Section<'a> {
+  meta: &'a SectionMeta,
   listings: Vec<&'a Listing>,
+}
+
+impl<'a> Section<'a> {
+  pub fn title(&self) -> &str {
+    self.meta.title()
+  }
+
+  pub fn priority(&self) -> i32 {
+    self.meta.priority()
+  }
+
+  pub fn listings(&self) -> &Vec<&Listing> {
+    &self.listings
+  }
 }
