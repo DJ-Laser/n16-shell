@@ -1,4 +1,4 @@
-use iced::advanced::widget::Tree;
+use iced::advanced::widget::{tree, Tree};
 use iced::advanced::{layout, mouse, overlay, Layout, Widget};
 use iced::widget::Column;
 use iced::{alignment, event, Element, Event, Length, Padding, Pixels, Rectangle, Size, Vector};
@@ -159,6 +159,14 @@ impl<'a, Message, Theme, Renderer> Widget<Message, Theme, Renderer>
 where
   Renderer: iced::advanced::Renderer,
 {
+  fn tag(&self) -> tree::Tag {
+    tree::Tag::of::<State>()
+  }
+
+  fn state(&self) -> tree::State {
+    tree::State::new(State::new())
+  }
+
   fn children(&self) -> Vec<Tree> {
     self.inner.children()
   }
@@ -174,22 +182,27 @@ where
     }
   }
 
-  fn layout(
-    &self,
-    tree: &mut iced::advanced::widget::Tree,
-    renderer: &Renderer,
-    limits: &layout::Limits,
-  ) -> layout::Node {
+  fn layout(&self, tree: &mut Tree, renderer: &Renderer, limits: &layout::Limits) -> layout::Node {
     let inner_limits = layout::Limits::new(
       Size::new(limits.min().width, limits.min().height),
       Size::new(limits.max().width, f32::MAX),
     );
 
     let size = self.size();
-    layout::Node::with_children(
+    let node = layout::Node::with_children(
       limits.resolve(size.width, size.height, Size::ZERO),
       vec![self.inner.layout(tree, renderer, &inner_limits)],
-    )
+    );
+
+    let layout = Layout::new(&node);
+
+    let bounds = layout.bounds();
+    let content_layout = layout.children().next().unwrap();
+
+    let state = tree.state.downcast_mut::<State>();
+    state.scroll_child_into_view(bounds, content_layout, self.view_child);
+
+    node
   }
 
   fn operate(
@@ -217,10 +230,11 @@ where
     shell: &mut iced::advanced::Shell<'_, Message>,
     _viewport: &Rectangle,
   ) -> event::Status {
-    let bounds = layout.bounds();
+    let state = tree.state.downcast_ref::<State>();
+    let translation = state.translation;
 
+    let bounds = layout.bounds();
     let content_layout = layout.children().next().unwrap();
-    let translation = get_translation(bounds, content_layout, self.view_child);
 
     let cursor = match cursor.position_over(bounds) {
       Some(cursor_position) => mouse::Cursor::Available(cursor_position + translation),
@@ -251,10 +265,11 @@ where
     _viewport: &Rectangle,
     renderer: &Renderer,
   ) -> mouse::Interaction {
-    let bounds = layout.bounds();
+    let state = tree.state.downcast_ref::<State>();
+    let translation = state.translation;
 
+    let bounds = layout.bounds();
     let content_layout = layout.children().next().unwrap();
-    let translation = get_translation(bounds, content_layout, self.view_child);
 
     self.inner.mouse_interaction(
       tree,
@@ -271,7 +286,7 @@ where
 
   fn draw(
     &self,
-    tree: &iced::advanced::widget::Tree,
+    tree: &Tree,
     renderer: &mut Renderer,
     theme: &Theme,
     style: &iced::advanced::renderer::Style,
@@ -279,13 +294,15 @@ where
     cursor: iced::advanced::mouse::Cursor,
     viewport: &iced::Rectangle,
   ) {
+    let state = tree.state.downcast_ref::<State>();
+    let translation = state.translation;
+
     let bounds = layout.bounds();
     let Some(visible_bounds) = bounds.intersection(viewport) else {
       return;
     };
 
     let content_layout = layout.children().next().unwrap();
-    let translation = get_translation(bounds, content_layout, self.view_child);
 
     let cursor = match cursor.position_over(bounds) {
       Some(cursor_position) => mouse::Cursor::Available(cursor_position + translation),
@@ -324,16 +341,13 @@ where
     renderer: &Renderer,
     translation: Vector,
   ) -> Option<overlay::Element<'b, Message, Theme, Renderer>> {
-    let bounds = layout.bounds();
-
-    let content_layout = layout.children().next().unwrap();
-    let offset = get_translation(bounds, content_layout, self.view_child);
+    let state = tree.state.downcast_ref::<State>();
 
     self.inner.overlay(
       tree,
       layout.children().next().unwrap(),
       renderer,
-      translation - offset,
+      translation - state.translation,
     )
   }
 }
@@ -350,17 +364,48 @@ where
   }
 }
 
-fn get_translation(viewport: Rectangle, content_layout: Layout, child: usize) -> Vector {
-  let translation = if let Some(layout) = content_layout.children().nth(child) {
-    layout.bounds().y - viewport.y
-  } else {
-    0.0
-  };
+struct State {
+  translation: Vector,
+}
 
-  let translation = translation.min(content_layout.bounds().height - viewport.height);
+impl State {
+  fn new() -> Self {
+    Self {
+      translation: Vector { x: 0.0, y: 0.0 },
+    }
+  }
 
-  Vector {
-    x: 0.0,
-    y: translation,
+  fn clamp_y(&mut self, min: f32, max: f32) {
+    self.translation.y = self.translation.y.clamp(min, max);
+  }
+
+  fn clamp_scroll(&mut self, viewport: Rectangle, content_layout: Layout) {
+    self.clamp_y(0.0, content_layout.bounds().height - viewport.height);
+  }
+
+  fn scroll_into_view(
+    &mut self,
+    viewport: Rectangle,
+    content_layout: Layout,
+    child_bounds: Rectangle,
+  ) {
+    let top = child_bounds.y - viewport.y;
+    let bottom = top - viewport.height + child_bounds.height;
+
+    if top > bottom {
+      self.clamp_y(bottom, top);
+    } else {
+      self.clamp_y(top, bottom);
+    }
+
+    self.clamp_scroll(viewport, content_layout);
+  }
+
+  fn scroll_child_into_view(&mut self, viewport: Rectangle, content_layout: Layout, child: usize) {
+    if let Some(child_layout) = content_layout.children().nth(child) {
+      self.scroll_into_view(viewport, content_layout, child_layout.bounds());
+    } else {
+      self.clamp_scroll(viewport, content_layout);
+    }
   }
 }
