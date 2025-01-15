@@ -17,7 +17,11 @@ pub trait Provider {
 
   fn priority() -> i32;
 
-  fn update_listings(&mut self);
+  /// Update the provider's internal listing data
+  /// Returns true if data has changed and needs to be updated
+  fn update_listings(&mut self) -> bool;
+
+  /// Copy internal listing data into the `Listing` format for use in rendering
   fn listings(&self) -> Vec<Listing>;
 
   fn execute(&self, listing_id: usize);
@@ -42,9 +46,9 @@ pub struct Listing {
   name: String,
   executable: bool,
   icon: Option<ListingIcon>,
-  // Should be the id of the provider that created it
+  /// Should be the id of the provider that created it
   provider: &'static str,
-  // Unique id for use with Provider::execute
+  /// Unique id for use with Provider::execute
   id: usize,
 }
 

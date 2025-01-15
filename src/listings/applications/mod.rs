@@ -1,13 +1,17 @@
-use std::{collections::HashMap, ffi::OsStr, path::PathBuf, process};
+use std::{
+  collections::HashMap,
+  ffi::OsStr,
+  hash::{DefaultHasher, Hash, Hasher},
+  path::PathBuf,
+  process,
+};
 
-use super::{Listing, ListingIcon, Provider};
+use super::{Listing, Provider};
 use freedesktop_desktop_entry::{self as desktop, DesktopEntry};
-use iced::widget::image;
-use iced_runtime::core::svg;
 use icon_theme::{get_icon_themes, IconTheme};
 use icons::get_icon;
 use itertools::Itertools;
-use listing::ListingData;
+use listing::{Icon, ListingData};
 use phf::phf_map;
 use xdg::BaseDirectories;
 
@@ -80,9 +84,9 @@ impl ApplicationProvider {
 
     let icon = get_icon(&entry, "hicolor", &self.icon_themes, &self.data_dirs).map(|path| {
       if matches!(path.extension().and_then(OsStr::to_str), Some("svg")) {
-        ListingIcon::Vector(svg::Handle::from_path(path))
+        Icon::Vector(path)
       } else {
-        ListingIcon::Bitmap(image::Handle::from_path(path))
+        Icon::Bitmap(path)
       }
     });
 
@@ -95,6 +99,12 @@ impl ApplicationProvider {
       icon,
       id,
     })
+  }
+
+  fn hash_listings(&self) -> u64 {
+    let mut state = DefaultHasher::new();
+    self.listings.hash(&mut state);
+    state.finish()
   }
 }
 
@@ -115,7 +125,9 @@ impl Provider for ApplicationProvider {
     100
   }
 
-  fn update_listings(&mut self) {
+  fn update_listings(&mut self) -> bool {
+    let old_hash = self.hash_listings();
+
     self.update_data();
 
     let entries = desktop::Iter::new(self.data_dirs.iter().map(|p| p.join("applications")))
@@ -127,6 +139,8 @@ impl Provider for ApplicationProvider {
       .filter_map(|(id, entry)| self.make_listing(id, &entry));
 
     self.listings = listings.collect();
+
+    return old_hash == self.hash_listings();
   }
 
   fn listings(&self) -> Vec<Listing> {
