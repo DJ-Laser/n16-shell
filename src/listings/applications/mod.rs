@@ -1,10 +1,10 @@
-use std::{ffi::OsStr, path::PathBuf, process};
+use std::{collections::HashMap, ffi::OsStr, path::PathBuf, process};
 
 use super::{Listing, ListingIcon, Provider};
 use freedesktop_desktop_entry::{self as desktop, DesktopEntry};
 use iced::widget::image;
 use iced_runtime::core::svg;
-use icon_theme::get_icon_themes;
+use icon_theme::{get_icon_themes, IconTheme};
 use icons::get_icon;
 use itertools::Itertools;
 use listing::ListingData;
@@ -61,6 +61,41 @@ pub fn get_data_dirs(env: &BaseDirectories) -> Vec<PathBuf> {
 #[derive(Default)]
 pub struct ApplicationProvider {
   listings: Vec<ListingData>,
+  icon_themes: HashMap<String, IconTheme>,
+  data_dirs: Vec<PathBuf>,
+  locales: Vec<String>,
+}
+
+impl ApplicationProvider {
+  fn update_data(&mut self) {
+    self.data_dirs = get_data_dirs(&BaseDirectories::new().unwrap());
+    self.icon_themes = get_icon_themes(&self.data_dirs);
+    self.locales = desktop::get_languages_from_env();
+  }
+
+  fn make_listing(&self, id: usize, entry: &DesktopEntry) -> Option<ListingData> {
+    if !matches!(entry.type_(), Some("Application")) || entry.no_display() {
+      return None;
+    }
+
+    let icon = get_icon(&entry, "hicolor", &self.icon_themes, &self.data_dirs).map(|path| {
+      if matches!(path.extension().and_then(OsStr::to_str), Some("svg")) {
+        ListingIcon::Vector(svg::Handle::from_path(path))
+      } else {
+        ListingIcon::Bitmap(image::Handle::from_path(path))
+      }
+    });
+
+    let name = entry.name(&self.locales)?;
+    let exec = entry.exec();
+
+    Some(ListingData {
+      name: name.to_string(),
+      command: exec.map(str::to_string),
+      icon,
+      id,
+    })
+  }
 }
 
 impl Provider for ApplicationProvider {
@@ -81,38 +116,17 @@ impl Provider for ApplicationProvider {
   }
 
   fn update_listings(&mut self) {
-    let data_dirs = get_data_dirs(&BaseDirectories::new().unwrap());
-    let icon_themes = get_icon_themes(&data_dirs);
+    self.update_data();
 
-    let locales = &desktop::get_languages_from_env()[..];
+    let entries = desktop::Iter::new(self.data_dirs.iter().map(|p| p.join("applications")))
+      .entries(Some(&self.locales));
 
-    let entries =
-      desktop::Iter::new(data_dirs.iter().map(|p| p.join("applications"))).entries(Some(locales));
+    let listings = entries
+      .unique()
+      .enumerate()
+      .filter_map(|(id, entry)| self.make_listing(id, &entry));
 
-    let applications = entries.unique().enumerate().filter_map(move |(id, entry)| {
-      if !matches!(entry.type_(), Some("Application")) || entry.no_display() {
-        return None;
-      }
-
-      let icon = get_icon(&entry, "hicolor", &icon_themes, &data_dirs).map(|path| {
-        if matches!(path.extension().and_then(OsStr::to_str), Some("svg")) {
-          ListingIcon::Vector(svg::Handle::from_path(path))
-        } else {
-          ListingIcon::Bitmap(image::Handle::from_path(path))
-        }
-      });
-      let name = entry.name(locales)?;
-      let exec = entry.exec();
-
-      return Some(ListingData {
-        name: name.to_string(),
-        icon,
-        command: exec.map(str::to_string),
-        id,
-      });
-    });
-
-    self.listings = applications.collect();
+    self.listings = listings.collect();
   }
 
   fn listings(&self) -> Vec<Listing> {
