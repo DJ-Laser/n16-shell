@@ -1,0 +1,8 @@
+[package]
+name = "n16-theme"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+iced.workspace = true
+iced_layershell.workspace = true

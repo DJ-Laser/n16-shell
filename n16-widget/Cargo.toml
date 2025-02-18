@@ -1,0 +1,9 @@
+[package]
+name = "n16-widget"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+n16-theme.workspace = true
+
+iced.workspace = true

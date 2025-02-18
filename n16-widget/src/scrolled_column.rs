@@ -2,9 +2,10 @@ use iced::advanced::widget::{tree, Tree};
 use iced::advanced::{layout, mouse, overlay, Layout, Widget};
 use iced::widget::Column;
 use iced::{alignment, event, Element, Event, Length, Padding, Pixels, Rectangle, Size, Vector};
+use n16_theme::Base16Theme;
 
 /// A thin wrapper around `Column` that lets it be translated in the draw phase
-pub struct ScrolledColumn<'a, Message, Theme = crate::Base16Theme, Renderer = iced::Renderer> {
+pub struct ScrolledColumn<'a, Message, Theme = Base16Theme, Renderer = iced::Renderer> {
   inner: Column<'a, Message, Theme, Renderer>,
   height: Length,
   view_child: usize,

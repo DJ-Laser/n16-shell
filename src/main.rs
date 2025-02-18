@@ -1,25 +1,12 @@
-use std::fmt::Debug;
-
-use component::search::SEARCH_INPUT_ID;
-use iced::keyboard::key;
-use iced::widget::{column, container, horizontal_rule, text_input};
-use iced::{color, gradient, Element, Length, Subscription, Task};
-use iced_layershell::build_pattern::{application, MainSettings};
+use iced::{color, window, Element, Subscription, Task};
+use iced_layershell::build_pattern::MainSettings;
 use iced_layershell::reexport::Anchor;
 use iced_layershell::settings::LayerShellSettings;
-use iced_layershell::to_layer_message;
+use iced_layershell::{build_pattern::daemon, to_layer_message};
 
-use component::{listing, search};
-use listings::{Listing, Provider};
-use providers::applications::ApplicationProvider;
-use providers::power_management::PowerManagementProvider;
-use theme::Base16Theme;
-
-mod component;
-pub mod listings;
-pub mod providers;
-pub mod theme;
-mod widget;
+use n16_launcher::providers::{ApplicationProvider, PowerManagementProvider};
+use n16_launcher::Launcher;
+use n16_theme::Base16Theme;
 
 fn main() -> Result<(), iced_layershell::Error> {
   let theme = Base16Theme {
@@ -45,8 +32,10 @@ fn main() -> Result<(), iced_layershell::Error> {
   launcher.add_provider(ApplicationProvider::new());
   launcher.add_provider(PowerManagementProvider::new());
 
-  application("A cool counter", Launcher::update, Launcher::view)
-    .subscription(Launcher::subscription)
+  let shell = Shell::new(launcher);
+
+  daemon("N16 Shell", Shell::update, Shell::view, Shell::remove_id)
+    .subscription(Shell::subscription)
     .theme(move |_| theme.clone())
     .settings(MainSettings {
       layer_settings: LayerShellSettings {
@@ -57,176 +46,54 @@ fn main() -> Result<(), iced_layershell::Error> {
       },
       ..Default::default()
     })
-    .run_with(|| (launcher, Task::done(Message::Init)))
+    .run_with(|| (shell, Task::done(Message::Init)))
 }
 
-#[to_layer_message]
+#[to_layer_message(multi)]
 #[derive(Debug, Clone)]
 enum Message {
   Init,
-  ListingExecuted,
-  SearchQueryChanged(String),
-  SelectNextListing,
-  SelectPrevListing,
-  RunSelected,
-  ListingClicked(usize),
-  Exit,
+  Launcher(n16_launcher::Message),
 }
 
-#[derive(Default)]
-struct Launcher {
-  providers: Vec<Box<dyn Provider>>,
-  listings: Vec<Box<dyn Listing>>,
-  filtered_listings: Vec<usize>,
-  query: String,
-  selected_idx: usize,
+struct Shell {
+  launcher: (Launcher, Option<window::Id>),
 }
 
-impl Launcher {
-  fn new() -> Self {
+impl Shell {
+  pub fn new(launcher: Launcher) -> Self {
     Self {
-      providers: Vec::new(),
-      listings: Vec::new(),
-      filtered_listings: Vec::new(),
-      query: String::new(),
-      selected_idx: 0,
+      launcher: (launcher, None),
     }
   }
 
-  fn add_provider<P: Provider + 'static>(&mut self, provider: P) {
-    self.providers.push(Box::new(provider));
+  pub fn view(&self, window: window::Id) -> Element<'_, Message, Base16Theme> {
+    self.launcher.0.view().map(Message::Launcher)
   }
 
-  fn subscription(&self) -> Subscription<Message> {
-    iced::event::listen_with(|event, _status, _window| match event {
-      iced::Event::Window(iced::window::Event::Unfocused) => Some(Message::Exit),
-      iced::Event::Keyboard(iced::keyboard::Event::KeyPressed { key, .. }) => match key {
-        iced::keyboard::Key::Named(key::Named::ArrowUp) => Some(Message::SelectPrevListing),
-        iced::keyboard::Key::Named(key::Named::ArrowDown) => Some(Message::SelectNextListing),
-        iced::keyboard::Key::Named(key::Named::Enter) => Some(Message::RunSelected),
-        iced::keyboard::Key::Named(key::Named::Escape) => Some(Message::Exit),
-        _ => None,
-      },
-      _ => None,
-    })
-  }
-
-  fn scroll_to_selected(&self) -> Task<Message> {
-    Task::none()
-  }
-
-  fn update_listings(&mut self) {
-    self.listings.clear();
-
-    let listings = self
-      .providers
-      .iter_mut()
-      .map(|provider| provider.update_listings())
-      .flatten()
-      .flatten();
-
-    self.listings.extend(listings);
-    self.filter_listings();
-  }
-
-  fn filter_listings(&mut self) {
-    self.filtered_listings.clear();
-    self.filtered_listings.extend(
-      self
-        .listings
-        .iter()
-        .enumerate()
-        .filter(|(_idx, listing)| search::filter_listing(listing.as_ref(), &self.query))
-        .map(|(idx, _listing)| idx),
-    );
-  }
-
-  fn update(&mut self, message: Message) -> Task<Message> {
+  pub fn update(&mut self, message: Message) -> Task<Message> {
     match message {
-      Message::Init => {
-        self.update_listings();
-        text_input::focus(SEARCH_INPUT_ID)
-      }
+      Message::Init => self
+        .launcher
+        .0
+        .update(n16_launcher::Message::Open)
+        .map(Message::Launcher),
 
-      Message::RunSelected => self.listings[self.filtered_listings[self.selected_idx]].execute(),
+      Message::Launcher(launcher_message) => self
+        .launcher
+        .0
+        .update(launcher_message)
+        .map(Message::Launcher),
 
-      Message::ListingClicked(idx) => self.listings[idx].execute(),
-
-      Message::ListingExecuted => Task::done(Message::Exit),
-
-      Message::SearchQueryChanged(query) => {
-        self.query = query;
-        self.selected_idx = 0;
-        self.filter_listings();
-        Task::none()
-      }
-
-      Message::SelectNextListing => {
-        if self.selected_idx >= self.filtered_listings.len() - 1 {
-          self.selected_idx = 0;
-        } else {
-          self.selected_idx += 1;
-        }
-
-        self.scroll_to_selected()
-      }
-
-      Message::SelectPrevListing => {
-        if self.selected_idx == 0 {
-          self.selected_idx = self.filtered_listings.len() - 1;
-        } else {
-          self.selected_idx -= 1;
-        }
-
-        self.scroll_to_selected()
-      }
-
-      Message::Exit => iced_runtime::task::effect(iced_runtime::Action::Exit),
-
-      _ => todo!(),
+      _ => Task::none(),
     }
   }
 
-  fn view(&self) -> Element<'_, Message, Base16Theme> {
-    let mut listings = scrolled_column![]
-      .height(Length::Fill)
-      .view_child(self.selected_idx);
+  pub fn subscription(&self) -> Subscription<Message> {
+    Subscription::batch([self.launcher.0.subscription().map(Message::Launcher)])
+  }
 
-    for (filtered_idx, listing_idx) in self.filtered_listings.iter().enumerate() {
-      let selected = filtered_idx == self.selected_idx;
-      listings = listings.push(listing::view(
-        self.listings[*listing_idx].as_ref(),
-        selected,
-        Message::ListingClicked(*listing_idx),
-      ));
-    }
-
-    let column = column![
-      search::view(&self.query).into(),
-      horizontal_rule(20),
-      listings
-    ];
-
-    let inner = container(column)
-      .height(Length::Fill)
-      .padding(8)
-      .style(|theme| container::Style {
-        background: Some(theme.base00.into()),
-        ..Default::default()
-      });
-
-    container(inner)
-      .padding(4)
-      .style(|theme| {
-        let gradient = gradient::Linear::new(50)
-          .add_stop(0.0, theme.base0D)
-          .add_stop(1.0, theme.base0E);
-
-        container::Style {
-          background: Some(gradient.into()),
-          ..Default::default()
-        }
-      })
-      .into()
+  pub fn remove_id(&mut self, window: window::Id) {
+    println!("remove_id called with window {:?}", window);
   }
 }

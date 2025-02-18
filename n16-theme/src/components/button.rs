@@ -1,7 +1,7 @@
 use iced::border;
 use iced::widget::button::{Catalog, Status, Style, StyleFn};
 
-use super::Base16Theme;
+use crate::Base16Theme;
 
 impl Catalog for Base16Theme {
   type Class<'a> = StyleFn<'a, Self>;

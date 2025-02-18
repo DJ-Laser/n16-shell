@@ -1,14 +1,26 @@
+[workspace]
+members = [
+  "n16-launcher", "n16-theme", "n16-widget",
+]
+
+[workspace.dependencies]
+n16-theme = { path = "./n16-theme" }
+n16-widget = { path = "./n16-widget" }
+n16-launcher = { path = "./n16-launcher" }
+
+iced = { version = "0.13.1", features = ["advanced", "image", "svg"] }
+iced_layershell = "0.13.0"
+iced_runtime = "0.13.2"
+itertools = "0.14.0"
+
 [package]
 name = "n16-shell"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-freedesktop-desktop-entry = "0.7.5"
-iced = { version = "0.13.1", features = ["advanced", "image", "svg"] }
-iced_layershell = "0.13.0"
-iced_runtime = "0.13.2"
-itertools = "0.14.0"
-phf = "0.11.2"
-tini = "1.3.0"
-xdg = "2.5.2"
+n16-theme.workspace = true
+n16-launcher.workspace = true
+
+iced.workspace = true
+iced_layershell.workspace = true

@@ -1,8 +1,8 @@
 use iced::widget::{button, horizontal_space, image, row, svg, text};
 use iced::{alignment, Length};
+use n16_theme::Base16Theme;
 
 use crate::listings::{Listing, ListingIcon};
-use crate::theme::{self, Base16Theme};
 
 use super::Component;
 
@@ -46,7 +46,7 @@ pub fn view(
     .style(move |theme: &Base16Theme, status| {
       let base = button::Style {
         background: Some(theme.base00.into()),
-        ..theme::button::base(theme)
+        ..n16_theme::button::base(theme)
       };
 
       match status {
@@ -61,7 +61,7 @@ pub fn view(
         },
 
         button::Status::Active | button::Status::Pressed => base,
-        button::Status::Disabled => theme::button::disabled(base),
+        button::Status::Disabled => n16_theme::button::disabled(base),
       }
     })
     .on_press(on_press)

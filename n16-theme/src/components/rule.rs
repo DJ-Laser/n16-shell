@@ -1,6 +1,6 @@
 use iced::widget::rule::{Catalog, FillMode, Style, StyleFn};
 
-use super::Base16Theme;
+use crate::Base16Theme;
 
 impl Catalog for Base16Theme {
   type Class<'a> = StyleFn<'a, Self>;

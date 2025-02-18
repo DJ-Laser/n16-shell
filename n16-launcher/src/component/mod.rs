@@ -1,6 +1,5 @@
 use iced::Element;
-
-use crate::theme::Base16Theme;
+use n16_theme::Base16Theme;
 
 pub mod listing;
 pub mod search;

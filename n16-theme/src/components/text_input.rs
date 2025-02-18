@@ -1,7 +1,7 @@
 use iced::widget::text_input::{Catalog, Status, Style, StyleFn};
 use iced::Border;
 
-use super::Base16Theme;
+use crate::Base16Theme;
 
 impl Catalog for Base16Theme {
   type Class<'a> = StyleFn<'a, Self>;
