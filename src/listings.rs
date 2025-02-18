@@ -1,38 +1,19 @@
-use iced::widget::{image, svg};
+use std::fmt::Debug;
 
-pub mod applications;
+use iced::{
+  widget::{image, svg},
+  Task,
+};
 
-#[derive(Debug, Clone)]
-pub struct ProviderMeta {
-  id: &'static str,
-  name: &'static str,
-  priority: i32,
-}
+use crate::Message;
 
 pub trait Provider {
-  fn new() -> Self;
+  fn name(&self) -> &'static str;
 
-  fn id() -> &'static str;
-  fn name() -> &'static str;
+  fn priority(&self) -> i32;
 
-  fn priority() -> i32;
-
-  /// Update the provider's internal listing data
-  /// Returns true if data has changed and needs to be updated
-  fn update_listings(&mut self) -> bool;
-
-  /// Copy internal listing data into the `Listing` format for use in rendering
-  fn listings(&self) -> Vec<Listing>;
-
-  fn execute(&self, listing_id: usize);
-
-  fn meta() -> ProviderMeta {
-    ProviderMeta {
-      id: Self::id(),
-      name: Self::name(),
-      priority: Self::priority(),
-    }
-  }
+  /// Optionally returns a new list of listings when their data is updated
+  fn update_listings(&mut self) -> Option<Vec<Box<dyn Listing>>>;
 }
 
 #[derive(Debug, Clone)]
@@ -41,33 +22,13 @@ pub enum ListingIcon {
   Vector(svg::Handle),
 }
 
-#[derive(Debug, Clone)]
-pub struct Listing {
-  name: String,
-  executable: bool,
-  icon: Option<ListingIcon>,
-  /// Should be the id of the provider that created it
-  provider: &'static str,
-  /// Unique id for use with Provider::execute
-  id: usize,
-}
+pub trait Listing: Debug {
+  fn name(&self) -> &str;
 
-impl Listing {
-  pub fn name(&self) -> &str {
-    &self.name
-  }
+  fn icon(&self) -> Option<&ListingIcon>;
 
-  pub fn executable(&self) -> bool {
-    self.executable
-  }
-
-  pub fn icon(&self) -> &Option<ListingIcon> {
-    &self.icon
-  }
-
-  pub fn id(&self) -> usize {
-    self.id
-  }
+  fn executable(&self) -> bool;
+  fn execute(&self) -> Task<Message>;
 }
 
 #[derive(Debug)]
@@ -92,7 +53,7 @@ impl SectionMeta {
 #[derive(Debug)]
 pub struct Section<'a> {
   meta: &'a SectionMeta,
-  listings: Vec<&'a Listing>,
+  listings: Vec<&'a dyn Listing>,
 }
 
 impl<'a> Section<'a> {
@@ -104,7 +65,7 @@ impl<'a> Section<'a> {
     self.meta.priority()
   }
 
-  pub fn listings(&self) -> &Vec<&Listing> {
+  pub fn listings(&self) -> &Vec<&'a dyn Listing> {
     &self.listings
   }
 }

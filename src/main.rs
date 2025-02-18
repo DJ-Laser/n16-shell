@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use component::search::{preprocess_query, SEARCH_INPUT_ID};
 use iced::keyboard::key;
 use iced::widget::{column, container, horizontal_rule, text_input};
@@ -8,12 +10,13 @@ use iced_layershell::settings::LayerShellSettings;
 use iced_layershell::to_layer_message;
 
 use component::{listing, search};
-use listings::applications::ApplicationProvider;
 use listings::{Listing, Provider};
+use providers::applications::ApplicationProvider;
 use theme::Base16Theme;
 
 mod component;
 pub mod listings;
+pub mod providers;
 pub mod theme;
 mod widget;
 
@@ -37,6 +40,9 @@ fn main() -> Result<(), iced_layershell::Error> {
     base0F: color!(0xa3685a),
   };
 
+  let mut launcher = Launcher::new();
+  launcher.add_provider(ApplicationProvider::new());
+
   application("A cool counter", Launcher::update, Launcher::view)
     .subscription(Launcher::subscription)
     .theme(move |_| theme.clone())
@@ -49,25 +55,27 @@ fn main() -> Result<(), iced_layershell::Error> {
       },
       ..Default::default()
     })
-    .run_with(|| (Launcher::new(), Task::done(Message::Init)))
+    .run_with(|| (launcher, Task::done(Message::Init)))
 }
 
 #[to_layer_message]
 #[derive(Debug, Clone)]
 enum Message {
   Init,
-  ListingClicked(usize),
+  ListingExecuted,
   SearchQueryChanged(String),
   SelectNextListing,
   SelectPrevListing,
   RunSelected,
+  ListingClicked(usize),
   Exit,
 }
 
 #[derive(Default)]
 struct Launcher {
-  provider: ApplicationProvider,
-  listings: Vec<Listing>,
+  providers: Vec<Box<dyn Provider>>,
+  listings: Vec<Box<dyn Listing>>,
+  filtered_listings: Vec<usize>,
   query: String,
   selected_idx: usize,
 }
@@ -75,11 +83,16 @@ struct Launcher {
 impl Launcher {
   fn new() -> Self {
     Self {
-      provider: ApplicationProvider::new(),
+      providers: Vec::new(),
       listings: Vec::new(),
+      filtered_listings: Vec::new(),
       query: String::new(),
       selected_idx: 0,
     }
+  }
+
+  fn add_provider<P: Provider + 'static>(&mut self, provider: P) {
+    self.providers.push(Box::new(provider));
   }
 
   fn subscription(&self) -> Subscription<Message> {
@@ -100,34 +113,44 @@ impl Launcher {
     Task::none()
   }
 
-  fn filter_listings(&mut self) {
+  fn update_listings(&mut self) {
     self.listings.clear();
 
-    let listings =
-      self.provider.listings().into_iter().filter(|listing| {
-        preprocess_query(listing.name()).contains(&preprocess_query(&self.query))
-      });
+    let listings = self
+      .providers
+      .iter_mut()
+      .map(|provider| provider.update_listings())
+      .flatten()
+      .flatten();
 
     self.listings.extend(listings);
+    self.filter_listings();
+  }
+
+  fn filter_listings(&mut self) {
+    self.filtered_listings.clear();
+    self.filtered_listings.extend(
+      self
+        .listings
+        .iter()
+        .enumerate()
+        .filter(|(_idx, listing)| listing.name().contains(&preprocess_query(&self.query)))
+        .map(|(idx, _listing)| idx),
+    );
   }
 
   fn update(&mut self, message: Message) -> Task<Message> {
     match message {
       Message::Init => {
-        self.provider.update_listings();
-        self.filter_listings();
+        self.update_listings();
         text_input::focus(SEARCH_INPUT_ID)
       }
 
-      Message::ListingClicked(idx) => {
-        self.provider.execute(idx);
-        Task::done(Message::Exit)
-      }
+      Message::RunSelected => self.listings[self.filtered_listings[self.selected_idx]].execute(),
 
-      Message::RunSelected => {
-        self.provider.execute(self.listings[self.selected_idx].id());
-        Task::done(Message::Exit)
-      }
+      Message::ListingClicked(idx) => self.listings[idx].execute(),
+
+      Message::ListingExecuted => Task::done(Message::Exit),
 
       Message::SearchQueryChanged(query) => {
         self.query = query;
@@ -137,7 +160,7 @@ impl Launcher {
       }
 
       Message::SelectNextListing => {
-        if self.selected_idx >= self.listings.len() - 1 {
+        if self.selected_idx >= self.filtered_listings.len() - 1 {
           self.selected_idx = 0;
         } else {
           self.selected_idx += 1;
@@ -148,7 +171,7 @@ impl Launcher {
 
       Message::SelectPrevListing => {
         if self.selected_idx == 0 {
-          self.selected_idx = self.listings.len() - 1;
+          self.selected_idx = self.filtered_listings.len() - 1;
         } else {
           self.selected_idx -= 1;
         }
@@ -167,13 +190,12 @@ impl Launcher {
       .height(Length::Fill)
       .view_child(self.selected_idx);
 
-    for (index, listing) in self.listings.iter().enumerate() {
-      let selected = index == self.selected_idx;
-      let listing_id = listing.id();
+    for (filtered_idx, listing_idx) in self.filtered_listings.iter().enumerate() {
+      let selected = filtered_idx == self.selected_idx;
       listings = listings.push(listing::view(
-        listing,
+        self.listings[*listing_idx].as_ref(),
         selected,
-        Message::ListingClicked(listing_id),
+        Message::ListingClicked(*listing_idx),
       ));
     }
 

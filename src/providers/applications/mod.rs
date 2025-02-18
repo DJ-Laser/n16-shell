@@ -1,19 +1,14 @@
-use std::{
-  collections::HashMap,
-  ffi::OsStr,
-  hash::{DefaultHasher, Hash, Hasher},
-  path::PathBuf,
-  process,
-};
+use std::{collections::HashMap, path::PathBuf};
 
-use super::{Listing, Provider};
 use freedesktop_desktop_entry::{self as desktop, DesktopEntry};
 use icon_theme::{get_icon_themes, IconTheme};
 use icons::get_icon;
 use itertools::Itertools;
-use listing::{Icon, ListingData};
+use listing::ListingData;
 use phf::phf_map;
 use xdg::BaseDirectories;
+
+use crate::listings::{Listing, Provider};
 
 mod icon_theme;
 mod icons;
@@ -71,63 +66,35 @@ pub struct ApplicationProvider {
 }
 
 impl ApplicationProvider {
+  pub fn new() -> Self {
+    Self::default()
+  }
+
   fn update_data(&mut self) {
     self.data_dirs = get_data_dirs(&BaseDirectories::new().unwrap());
     self.icon_themes = get_icon_themes(&self.data_dirs);
     self.locales = desktop::get_languages_from_env();
   }
 
-  fn make_listing(&self, id: usize, entry: &DesktopEntry) -> Option<ListingData> {
+  fn make_listing(&self, entry: &DesktopEntry) -> Option<ListingData> {
     if !matches!(entry.type_(), Some("Application")) || entry.no_display() {
       return None;
     }
 
-    let icon = get_icon(&entry, "hicolor", &self.icon_themes, &self.data_dirs).map(|path| {
-      if matches!(path.extension().and_then(OsStr::to_str), Some("svg")) {
-        Icon::Vector(path)
-      } else {
-        Icon::Bitmap(path)
-      }
-    });
+    let icon = get_icon(&entry, "hicolor", &self.icon_themes, &self.data_dirs);
 
     let name = entry.name(&self.locales)?;
     let exec = entry.exec();
 
-    Some(ListingData {
-      name: name.to_string(),
-      command: exec.map(str::to_string),
+    Some(ListingData::new(
+      name.to_string(),
       icon,
-      id,
-    })
+      exec.map(str::to_string),
+      PathBuf::from(entry.path.to_owned()),
+    ))
   }
 
-  fn hash_listings(&self) -> u64 {
-    let mut state = DefaultHasher::new();
-    self.listings.hash(&mut state);
-    state.finish()
-  }
-}
-
-impl Provider for ApplicationProvider {
-  fn new() -> Self {
-    Self::default()
-  }
-
-  fn id() -> &'static str {
-    "applications"
-  }
-
-  fn name() -> &'static str {
-    "Application Provider"
-  }
-
-  fn priority() -> i32 {
-    100
-  }
-
-  fn update_listings(&mut self) -> bool {
-    let old_hash = self.hash_listings();
-
+  fn update(&mut self) {
     self.update_data();
 
     let entries = desktop::Iter::new(self.data_dirs.iter().map(|p| p.join("applications")))
@@ -135,41 +102,30 @@ impl Provider for ApplicationProvider {
 
     let listings = entries
       .unique()
-      .enumerate()
-      .filter_map(|(id, entry)| self.make_listing(id, &entry));
+      .filter_map(|entry| self.make_listing(&entry));
 
     self.listings = listings.collect();
+  }
+}
 
-    return old_hash == self.hash_listings();
+impl Provider for ApplicationProvider {
+  fn name(&self) -> &'static str {
+    "Application Provider"
   }
 
-  fn listings(&self) -> Vec<Listing> {
-    self.listings.iter().map(|l| l.into()).collect()
+  fn priority(&self) -> i32 {
+    100
   }
 
-  fn execute(&self, listing_id: usize) {
-    let listing = &self.listings.iter().find(|data| data.id == listing_id);
-    let listing = match listing {
-      Some(listing) => listing,
-      None => panic!(
-        "Attempted to execute listing with nonexistent id: {}",
-        listing_id
-      ),
-    };
+  fn update_listings(&mut self) -> Option<Vec<Box<dyn Listing>>> {
+    self.update();
 
-    let command = listing
-      .command
-      .as_ref()
-      .expect("Should not run listings with executable: false");
-
-    let args: Vec<&str> = command
-      .split_ascii_whitespace()
-      .filter_map(|s| if s.starts_with('%') { None } else { Some(s) })
-      .collect();
-
-    match process::Command::new(args[0]).args(&args[1..]).spawn() {
-      Err(error) => panic!("{}", error),
-      Ok(_) => (),
-    };
+    Some(
+      self
+        .listings
+        .iter()
+        .map(|listing| Box::new(listing.clone()) as Box<dyn Listing>)
+        .collect(),
+    )
   }
 }
