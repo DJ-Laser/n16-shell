@@ -9,7 +9,6 @@ n16-widget.workspace = true
 
 iced.workspace = true
 iced_layershell.workspace = true
-iced_runtime.workspace = true
 itertools.workspace = true
 
 freedesktop-desktop-entry = "0.7.5"

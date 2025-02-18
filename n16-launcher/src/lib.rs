@@ -118,7 +118,7 @@ impl Launcher {
         self.scroll_to_selected()
       }
 
-      Message::Close => iced_runtime::task::effect(iced_runtime::Action::Exit),
+      Message::Close => iced::exit(),
     }
   }
 

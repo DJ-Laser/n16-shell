@@ -1,16 +1,19 @@
 [workspace]
 members = [
-  "n16-launcher", "n16-theme", "n16-widget",
+  "n16-application",
+  "n16-launcher",
+  "n16-theme",
+  "n16-widget",
 ]
 
 [workspace.dependencies]
 n16-theme = { path = "./n16-theme" }
 n16-widget = { path = "./n16-widget" }
 n16-launcher = { path = "./n16-launcher" }
+n16-application = { path = "./n16-application" }
 
 iced = { version = "0.13.1", features = ["advanced", "image", "svg"] }
 iced_layershell = "0.13.0"
-iced_runtime = "0.13.2"
 itertools = "0.14.0"
 
 [package]
