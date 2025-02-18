@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use component::search::{preprocess_query, SEARCH_INPUT_ID};
+use component::search::SEARCH_INPUT_ID;
 use iced::keyboard::key;
 use iced::widget::{column, container, horizontal_rule, text_input};
 use iced::{color, gradient, Element, Length, Subscription, Task};
@@ -12,6 +12,7 @@ use iced_layershell::to_layer_message;
 use component::{listing, search};
 use listings::{Listing, Provider};
 use providers::applications::ApplicationProvider;
+use providers::power_management::PowerManagementProvider;
 use theme::Base16Theme;
 
 mod component;
@@ -42,6 +43,7 @@ fn main() -> Result<(), iced_layershell::Error> {
 
   let mut launcher = Launcher::new();
   launcher.add_provider(ApplicationProvider::new());
+  launcher.add_provider(PowerManagementProvider::new());
 
   application("A cool counter", Launcher::update, Launcher::view)
     .subscription(Launcher::subscription)
@@ -134,7 +136,7 @@ impl Launcher {
         .listings
         .iter()
         .enumerate()
-        .filter(|(_idx, listing)| listing.name().contains(&preprocess_query(&self.query)))
+        .filter(|(_idx, listing)| search::filter_listing(listing.as_ref(), &self.query))
         .map(|(idx, _listing)| idx),
     );
   }
