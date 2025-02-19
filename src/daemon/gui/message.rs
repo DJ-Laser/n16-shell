@@ -1,10 +1,13 @@
+use iced::futures::channel::oneshot;
 use iced_layershell::actions::LayershellCustomActionsWithId;
+use n16_ipc::Reply;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum Message {
   Init,
   Launcher(n16_launcher::Message),
   LayershellAction(LayershellCustomActionsWithId),
+  Request(n16_ipc::Request, oneshot::Sender<Reply>),
 }
 
 impl From<LayershellCustomActionsWithId> for Message {

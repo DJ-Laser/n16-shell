@@ -10,6 +10,7 @@ n16-application.workspace = true
 
 iced.workspace = true
 iced_layershell.workspace = true
+
 itertools.workspace = true
 
 freedesktop-desktop-entry = "0.7.5"

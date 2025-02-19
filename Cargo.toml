@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "n16-application",
+  "n16-ipc",
   "n16-launcher",
   "n16-theme",
   "n16-widget",
@@ -11,10 +12,15 @@ n16-theme = { path = "./n16-theme" }
 n16-widget = { path = "./n16-widget" }
 n16-launcher = { path = "./n16-launcher" }
 n16-application = { path = "./n16-application" }
+n16-ipc = { path = "./n16-ipc" }
 
 iced = { version = "0.13.1", features = ["advanced", "image", "svg"] }
 iced_layershell = "0.13.0"
 iced_futures = "0.13.2"
+
+serde = "1.0.217"
+serde_json = "1.0.138"
+
 itertools = "0.14.0"
 
 [package]
@@ -26,6 +32,11 @@ edition = "2021"
 n16-theme.workspace = true
 n16-launcher.workspace = true
 n16-application.workspace = true
+n16-ipc.workspace = true
 
 iced.workspace = true
 iced_layershell.workspace = true
+
+serde_json.workspace = true
+
+async-net = "2.0.0"
