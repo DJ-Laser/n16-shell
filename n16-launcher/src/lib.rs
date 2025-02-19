@@ -4,7 +4,9 @@ use iced::widget::{column, container, horizontal_rule, text_input};
 use iced::{gradient, Element, Length, Subscription, Task};
 
 use component::{listing, search};
+use iced_layershell::reexport::{Anchor, NewLayerShellSettings};
 use listings::{Listing, Provider};
+use n16_application::single_window::{ShellAction, ShellApplication};
 use n16_theme::Base16Theme;
 use n16_widget::scrolled_column;
 
@@ -22,6 +24,25 @@ pub enum Message {
   RunSelected,
   ListingClicked(usize),
   Close,
+}
+
+impl TryInto<ShellAction> for Message {
+  type Error = Self;
+
+  fn try_into(self) -> Result<ShellAction, Self::Error> {
+    match self {
+      Self::Open => Ok(ShellAction::Open(NewLayerShellSettings {
+        size: Some((1000, 600)),
+        anchor: Anchor::Top,
+        margin: Some((200, 0, 0, 0)),
+        ..Default::default()
+      })),
+
+      Self::Close => Ok(ShellAction::Close),
+
+      _ => Err(self),
+    }
+  }
 }
 
 #[derive(Default)]
@@ -77,8 +98,12 @@ impl Launcher {
         .map(|(idx, _listing)| idx),
     );
   }
+}
 
-  pub fn update(&mut self, message: Message) -> Task<Message> {
+impl ShellApplication for Launcher {
+  type Message = Message;
+
+  fn update(&mut self, message: Message) -> Task<Message> {
     match message {
       Message::Open => {
         self.update_listings();
@@ -122,7 +147,7 @@ impl Launcher {
     }
   }
 
-  pub fn view(&self) -> Element<'_, Message, Base16Theme> {
+  fn view(&self) -> Element<'_, Message, Base16Theme> {
     let mut listings = scrolled_column![]
       .height(Length::Fill)
       .view_child(self.selected_idx);
@@ -165,7 +190,7 @@ impl Launcher {
       .into()
   }
 
-  pub fn subscription(&self) -> Subscription<Message> {
+  fn subscription(&self) -> Subscription<Message> {
     iced::event::listen_with(|event, _status, _window| match event {
       iced::Event::Window(iced::window::Event::Unfocused) => Some(Message::Close),
       iced::Event::Keyboard(iced::keyboard::Event::KeyPressed { key, .. }) => match key {

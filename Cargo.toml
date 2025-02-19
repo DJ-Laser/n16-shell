@@ -14,6 +14,7 @@ n16-application = { path = "./n16-application" }
 
 iced = { version = "0.13.1", features = ["advanced", "image", "svg"] }
 iced_layershell = "0.13.0"
+iced_futures = "0.13.2"
 itertools = "0.14.0"
 
 [package]
@@ -24,6 +25,7 @@ edition = "2021"
 [dependencies]
 n16-theme.workspace = true
 n16-launcher.workspace = true
+n16-application.workspace = true
 
 iced.workspace = true
 iced_layershell.workspace = true

@@ -2186,6 +2186,8 @@ name = "n16-application"
 version = "0.1.0"
 dependencies = [
  "iced",
+ "iced_futures",
+ "iced_layershell",
  "n16-theme",
 ]
 
@@ -2197,6 +2199,7 @@ dependencies = [
  "iced",
  "iced_layershell",
  "itertools",
+ "n16-application",
  "n16-theme",
  "n16-widget",
  "phf",
@@ -2210,6 +2213,7 @@ version = "0.1.0"
 dependencies = [
  "iced",
  "iced_layershell",
+ "n16-application",
  "n16-launcher",
  "n16-theme",
 ]

@@ -1,12 +1,18 @@
-use iced::{color, window, Element, Subscription, Task};
-use iced_layershell::build_pattern::MainSettings;
-use iced_layershell::reexport::Anchor;
-use iced_layershell::settings::LayerShellSettings;
-use iced_layershell::{build_pattern::daemon, to_layer_message};
+use std::ops::ControlFlow;
 
+use iced::{color, window, Element, Subscription, Task};
+use iced_layershell::build_pattern::daemon;
+use iced_layershell::build_pattern::MainSettings;
+use iced_layershell::settings::{LayerShellSettings, StartMode};
+
+use n16_application::single_window::SingleApplicationManager;
 use n16_launcher::providers::{ApplicationProvider, PowerManagementProvider};
 use n16_launcher::Launcher;
 use n16_theme::Base16Theme;
+
+pub use message::Message;
+
+mod message;
 
 fn main() -> Result<(), iced_layershell::Error> {
   let theme = Base16Theme {
@@ -39,9 +45,7 @@ fn main() -> Result<(), iced_layershell::Error> {
     .theme(move |_| theme.clone())
     .settings(MainSettings {
       layer_settings: LayerShellSettings {
-        size: Some((1000, 600)),
-        anchor: Anchor::Top,
-        margin: (200, 0, 0, 0),
+        start_mode: StartMode::Background,
         ..Default::default()
       },
       ..Default::default()
@@ -49,48 +53,41 @@ fn main() -> Result<(), iced_layershell::Error> {
     .run_with(|| (shell, Task::done(Message::Init)))
 }
 
-#[to_layer_message(multi)]
-#[derive(Debug, Clone)]
-enum Message {
-  Init,
-  Launcher(n16_launcher::Message),
-}
-
 struct Shell {
-  launcher: (Launcher, Option<window::Id>),
+  launcher: SingleApplicationManager<Launcher, Message>,
 }
 
 impl Shell {
   pub fn new(launcher: Launcher) -> Self {
     Self {
-      launcher: (launcher, None),
+      launcher: SingleApplicationManager::new(launcher, Message::Launcher),
     }
   }
 
+  fn try_view(&self, window: window::Id) -> ControlFlow<Element<'_, Message, Base16Theme>> {
+    self.launcher.view(window)?;
+    ControlFlow::Continue(())
+  }
+
   pub fn view(&self, window: window::Id) -> Element<'_, Message, Base16Theme> {
-    self.launcher.0.view().map(Message::Launcher)
+    self
+      .try_view(window)
+      .break_value()
+      .expect("Shell::view should not be called with an unclaimed window")
   }
 
   pub fn update(&mut self, message: Message) -> Task<Message> {
     match message {
-      Message::Init => self
-        .launcher
-        .0
-        .update(n16_launcher::Message::Open)
-        .map(Message::Launcher),
+      Message::Init => Task::none(),
 
-      Message::Launcher(launcher_message) => self
-        .launcher
-        .0
-        .update(launcher_message)
-        .map(Message::Launcher),
+      Message::Launcher(launcher_message) => self.launcher.update(launcher_message),
 
       _ => Task::none(),
     }
   }
 
   pub fn subscription(&self) -> Subscription<Message> {
-    Subscription::batch([self.launcher.0.subscription().map(Message::Launcher)])
+    Subscription::batch([self.launcher.subscription().map(Message::Launcher)])
   }
 
   pub fn remove_id(&mut self, window: window::Id) {
