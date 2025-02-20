@@ -1,4 +1,4 @@
-use std::{fmt::Debug, ops::ControlFlow};
+use std::ops::ControlFlow;
 
 use iced::{window, Element, Subscription, Task};
 use iced_futures::MaybeSend;
@@ -9,21 +9,16 @@ use iced_layershell::{
 
 use n16_theme::Base16Theme;
 
+use crate::{ipc::RequestHandler, ShellMessage};
+
 pub enum ShellAction {
   Open(NewLayerShellSettings),
   LayershellAction(LayershellCustomActions),
   Close,
 }
 
-pub trait ShellMessage:
-  TryInto<ShellAction, Error = Self> + Debug + Clone + Send + 'static
-{
-}
-
-impl<T: TryInto<ShellAction, Error = Self> + Debug + Clone + Send + 'static> ShellMessage for T {}
-
 pub trait ShellApplication {
-  type Message: ShellMessage;
+  type Message: ShellMessage + TryInto<ShellAction, Error = Self::Message>;
 
   fn update(&mut self, message: Self::Message) -> Task<Self::Message>;
 
@@ -53,31 +48,37 @@ where
     }
   }
 
-  fn map_action(&self, action: ShellAction) -> LayershellCustomActionsWithId {
+  fn map_action(&self, action: ShellAction) -> Option<LayershellCustomActionsWithId> {
     match action {
       ShellAction::Open(settings) => {
-        let new_window = window::Id::unique();
-        //self.window = Some(id);
+        if let None = self.window {
+          let new_window = window::Id::unique();
+          //self.window = Some(new_window);
 
-        LayershellCustomActionsWithId::new(
-          None,
-          LayershellCustomActions::NewLayerShell {
-            id: new_window,
-            settings,
-          },
-        )
+          Some(LayershellCustomActionsWithId::new(
+            None,
+            LayershellCustomActions::NewLayerShell {
+              id: new_window,
+              settings,
+            },
+          ))
+        } else {
+          None
+        }
       }
       ShellAction::LayershellAction(action) => {
-        LayershellCustomActionsWithId::new(self.window, action)
+        Some(LayershellCustomActionsWithId::new(self.window, action))
       }
-      ShellAction::Close => LayershellCustomActionsWithId::new(
-        None,
-        LayershellCustomActions::RemoveWindow(
-          self
-            .window
-            .expect("Should not call ShellAction::Close without an active window"),
-        ),
-      ),
+      ShellAction::Close => {
+        if let Some(window) = self.window {
+          Some(LayershellCustomActionsWithId::new(
+            None,
+            LayershellCustomActions::RemoveWindow(window),
+          ))
+        } else {
+          None
+        }
+      }
     }
   }
 
@@ -96,7 +97,11 @@ where
     <A as ShellApplication>::Message: 'static,
   {
     let message = match message.try_into() {
-      Ok(action) => return Task::done(M::from(self.map_action(action))),
+      Ok(action) => {
+        return self
+          .map_action(action)
+          .map_or(Task::none(), |action| Task::done(M::from(action)))
+      }
       Err(message) => message,
     };
 
@@ -105,5 +110,26 @@ where
 
   pub fn subscription(&self) -> Subscription<A::Message> {
     self.application.subscription()
+  }
+}
+
+impl<A, M> RequestHandler for SingleApplicationManager<A, M>
+where
+  A: ShellApplication,
+  A: RequestHandler<Message = <A as ShellApplication>::Message>,
+  M: ShellMessage + From<LayershellCustomActionsWithId>,
+{
+  type Request = A::Request;
+  type Message = M;
+
+  fn handle_request(
+    &mut self,
+    request: Self::Request,
+    reply_channel: iced::futures::channel::oneshot::Sender<n16_ipc::Reply>,
+  ) -> Task<Self::Message> {
+    self
+      .application
+      .handle_request(request, reply_channel)
+      .map(self.map_fn)
   }
 }

@@ -1,11 +1,12 @@
 use std::ops::ControlFlow;
 
 use iced::{window, Element, Subscription, Task};
+use n16_ipc::Request;
 
 use crate::daemon::ipc::run_ipc_server;
 
 use super::Message;
-use n16_application::single_window::SingleApplicationManager;
+use n16_application::{ipc::RequestHandler, single_window::SingleApplicationManager};
 use n16_launcher::Launcher;
 use n16_theme::Base16Theme;
 
@@ -40,6 +41,14 @@ impl Shell {
       Message::Init => Task::none(),
 
       Message::Launcher(launcher_message) => self.launcher.update(launcher_message),
+
+      Message::Request(request, reply_channel) => match request {
+        Request::Launcher(launcher_request) => self
+          .launcher
+          .handle_request(launcher_request, reply_channel),
+
+        _ => Task::none(),
+      },
 
       _ => Task::none(),
     }

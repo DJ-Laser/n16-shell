@@ -6,7 +6,9 @@ use iced::{gradient, Element, Length, Subscription, Task};
 use component::{listing, search};
 use iced_layershell::reexport::{Anchor, NewLayerShellSettings};
 use listings::{Listing, Provider};
+use n16_application::ipc::RequestHandler;
 use n16_application::single_window::{ShellAction, ShellApplication};
+use n16_ipc::launcher::{self, Request, Response};
 use n16_theme::Base16Theme;
 use n16_widget::scrolled_column;
 
@@ -17,13 +19,13 @@ pub mod providers;
 #[derive(Debug, Clone)]
 pub enum Message {
   Open,
+  Close,
   ListingExecuted,
   SearchQueryChanged(String),
   SelectNextListing,
   SelectPrevListing,
   RunSelected,
   ListingClicked(usize),
-  Close,
 }
 
 impl TryInto<ShellAction> for Message {
@@ -105,11 +107,6 @@ impl ShellApplication for Launcher {
 
   fn update(&mut self, message: Message) -> Task<Message> {
     match message {
-      Message::Open => {
-        self.update_listings();
-        text_input::focus(SEARCH_INPUT_ID)
-      }
-
       Message::RunSelected => self.listings[self.filtered_listings[self.selected_idx]].execute(),
 
       Message::ListingClicked(idx) => self.listings[idx].execute(),
@@ -143,7 +140,7 @@ impl ShellApplication for Launcher {
         self.scroll_to_selected()
       }
 
-      Message::Close => iced::exit(),
+      _ => Task::none(),
     }
   }
 
@@ -202,5 +199,31 @@ impl ShellApplication for Launcher {
       },
       _ => None,
     })
+  }
+}
+
+impl RequestHandler for Launcher {
+  type Request = launcher::Request;
+  type Message = Message;
+
+  fn handle_request(
+    &mut self,
+    request: Self::Request,
+    reply_channel: iced::futures::channel::oneshot::Sender<n16_ipc::Reply>,
+  ) -> Task<Self::Message> {
+    match request {
+      Request::Open => {
+        reply_channel.send(Response::handled().reply_ok()).ok();
+        self.update_listings();
+        Task::batch([
+          text_input::focus(SEARCH_INPUT_ID),
+          Task::done(Message::Open),
+        ])
+      }
+      Request::Close => {
+        reply_channel.send(Response::handled().reply_ok()).ok();
+        Task::done(Message::Close)
+      }
+    }
   }
 }

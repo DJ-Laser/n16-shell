@@ -7,6 +7,7 @@ edition = "2021"
 n16-theme.workspace = true
 n16-widget.workspace = true
 n16-application.workspace = true
+n16-ipc.workspace = true
 
 iced.workspace = true
 iced_layershell.workspace = true

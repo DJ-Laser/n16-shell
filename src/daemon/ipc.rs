@@ -20,6 +20,12 @@ type Output = mpsc::Sender<(Request, oneshot::Sender<Reply>)>;
 pub fn run_ipc_server() -> impl Stream<Item = (Request, oneshot::Sender<Reply>)> {
   stream::channel(100, |output| async move {
     let socket_path = n16_ipc::get_socket_path().unwrap();
+
+    if socket_path.exists() {
+      // Remove old socket file
+      std::fs::remove_file(&socket_path).unwrap();
+    }
+
     let listener = UnixListener::bind(&socket_path).unwrap();
 
     listener

@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 n16-theme.workspace = true
+n16-ipc.workspace = true
 
 iced.workspace = true
 iced_layershell.workspace = true

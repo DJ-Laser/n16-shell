@@ -2205,6 +2205,7 @@ dependencies = [
  "iced",
  "iced_futures",
  "iced_layershell",
+ "n16-ipc",
  "n16-theme",
 ]
 
@@ -2225,6 +2226,7 @@ dependencies = [
  "iced_layershell",
  "itertools",
  "n16-application",
+ "n16-ipc",
  "n16-theme",
  "n16-widget",
  "phf",
