@@ -30,6 +30,15 @@ name = "n16-shell"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "n16"
+path = "src/main.rs"
+
 [dependencies]
 n16-ipc.workspace = true
 n16-daemon.workspace = true
+
+serde.workspace = true
+serde_json.workspace = true
+
+clap = { version = "4.5.30", features = ["derive"] }
