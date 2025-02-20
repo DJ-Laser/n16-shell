@@ -3,7 +3,7 @@ use std::ops::ControlFlow;
 use iced::{window, Element, Subscription, Task};
 use n16_ipc::Request;
 
-use crate::daemon::ipc::run_ipc_server;
+use crate::ipc::run_ipc_server;
 
 use super::Message;
 use n16_application::{ipc::RequestHandler, single_window::SingleApplicationManager};

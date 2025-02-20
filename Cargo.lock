@@ -2210,6 +2210,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "n16-daemon"
+version = "0.1.0"
+dependencies = [
+ "async-net",
+ "iced",
+ "iced_layershell",
+ "n16-application",
+ "n16-ipc",
+ "n16-launcher",
+ "n16-theme",
+ "serde_json",
+]
+
+[[package]]
 name = "n16-ipc"
 version = "0.1.0"
 dependencies = [
@@ -2238,14 +2252,8 @@ dependencies = [
 name = "n16-shell"
 version = "0.1.0"
 dependencies = [
- "async-net",
- "iced",
- "iced_layershell",
- "n16-application",
+ "n16-daemon",
  "n16-ipc",
- "n16-launcher",
- "n16-theme",
- "serde_json",
 ]
 
 [[package]]

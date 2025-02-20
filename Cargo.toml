@@ -1,6 +1,6 @@
 [workspace]
 members = [
-  "n16-application",
+  "n16-application", "n16-daemon",
   "n16-ipc",
   "n16-launcher",
   "n16-theme",
@@ -13,6 +13,7 @@ n16-widget = { path = "./n16-widget" }
 n16-launcher = { path = "./n16-launcher" }
 n16-application = { path = "./n16-application" }
 n16-ipc = { path = "./n16-ipc" }
+n16-daemon = { path = "./n16-daemon" }
 
 iced = { version = "0.13.1", features = ["advanced", "image", "svg"] }
 iced_layershell = "0.13.0"
@@ -29,14 +30,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-n16-theme.workspace = true
-n16-launcher.workspace = true
-n16-application.workspace = true
 n16-ipc.workspace = true
+n16-daemon.workspace = true
 
-iced.workspace = true
-iced_layershell.workspace = true
-
-serde_json.workspace = true
-
-async-net = "2.0.0"
