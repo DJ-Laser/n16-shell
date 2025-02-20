@@ -40,7 +40,7 @@ impl Response {
 
   /// Creates a `Response::Version()` containing `niri_ipc::VERSION_STRING`
   pub fn version() -> Self {
-    Self::Version(crate::VERSION_STRING.to_string())
+    Self::Version(crate::version())
   }
 }
 

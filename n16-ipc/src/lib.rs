@@ -9,11 +9,25 @@ use std::{
   path::PathBuf,
 };
 
+use git_version::git_version;
+
 pub use api::*;
 
 mod api;
 
-pub const VERSION_STRING: &'static str = env!("CARGO_PKG_VERSION");
+pub fn version() -> String {
+  const MAJOR: &str = env!("CARGO_PKG_VERSION_MAJOR");
+  const MINOR: &str = env!("CARGO_PKG_VERSION_MINOR");
+  const PATCH: &str = env!("CARGO_PKG_VERSION_PATCH");
+
+  let commit = git_version!(fallback = "unknown commit");
+
+  if PATCH == "0" {
+    format!("{MAJOR}.{MINOR:0>2} ({commit})")
+  } else {
+    format!("{MAJOR}.{MINOR:0>2}.{PATCH} ({commit})")
+  }
+}
 
 pub fn get_socket_path() -> Result<PathBuf, &'static str> {
   let runtime_path =
