@@ -58,7 +58,7 @@ impl Shell {
     Subscription::batch([
       Subscription::run(run_ipc_server)
         .map(|(request, reply_channel)| Message::Request(request, reply_channel)),
-      self.launcher.subscription().map(Message::Launcher),
+      self.launcher.subscription(),
     ])
   }
 

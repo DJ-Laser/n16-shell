@@ -9,7 +9,7 @@ use iced_layershell::{
 
 use n16_theme::Base16Theme;
 
-use crate::{ipc::RequestHandler, ShellMessage};
+use crate::{ipc::RequestHandler, subscription, ShellMessage};
 
 pub enum ShellAction {
   Open(NewLayerShellSettings),
@@ -55,6 +55,8 @@ where
           let new_window = window::Id::unique();
           self.window = Some(new_window);
 
+          println!("Opened window {}", new_window);
+
           Some(LayershellCustomActionsWithId::new(
             None,
             LayershellCustomActions::NewLayerShell {
@@ -63,6 +65,7 @@ where
             },
           ))
         } else {
+          println!("Open called with window {:?}", self.window);
           None
         }
       }
@@ -110,8 +113,15 @@ where
     self.application.update(message).map(self.map_fn)
   }
 
-  pub fn subscription(&self) -> Subscription<A::Message> {
-    self.application.subscription()
+  pub fn subscription(&self) -> Subscription<M>
+  where
+    M: 'static,
+  {
+    subscription::wrap_subscription(
+      self.application.subscription(),
+      self.window.clone().into_iter().collect(),
+      self.map_fn.clone(),
+    )
   }
 }
 
