@@ -33,7 +33,7 @@ impl Shell {
     self
       .try_view(window)
       .break_value()
-      .expect("Shell::view should not be called with an unclaimed window")
+      .unwrap_or_else(|| "ERROR: Unclaimed window".into())
   }
 
   pub fn update(&mut self, message: Message) -> Task<Message> {

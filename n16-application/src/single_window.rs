@@ -48,12 +48,12 @@ where
     }
   }
 
-  fn map_action(&self, action: ShellAction) -> Option<LayershellCustomActionsWithId> {
+  fn map_action(&mut self, action: ShellAction) -> Option<LayershellCustomActionsWithId> {
     match action {
       ShellAction::Open(settings) => {
         if let None = self.window {
           let new_window = window::Id::unique();
-          //self.window = Some(new_window);
+          self.window = Some(new_window);
 
           Some(LayershellCustomActionsWithId::new(
             None,
@@ -71,6 +71,8 @@ where
       }
       ShellAction::Close => {
         if let Some(window) = self.window {
+          self.window = None;
+
           Some(LayershellCustomActionsWithId::new(
             None,
             LayershellCustomActions::RemoveWindow(window),
