@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+pub mod bar;
 pub mod launcher;
 
 /// Request sent to the n16 daemon
@@ -7,6 +8,7 @@ pub mod launcher;
 pub enum Request {
   Version,
   Launcher(launcher::Request),
+  Bar(bar::Request),
 }
 
 impl Request {
@@ -25,6 +27,7 @@ pub enum Response {
   Version(String),
   /// A response from `n16-launcher`
   Launcher(launcher::Response),
+  Bar(bar::Response),
 }
 
 impl Response {

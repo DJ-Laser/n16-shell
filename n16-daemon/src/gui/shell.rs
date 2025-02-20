@@ -1,24 +1,25 @@
 use std::ops::ControlFlow;
 
 use iced::{window, Element, Subscription, Task};
-use n16_ipc::Request;
+use n16_ipc::{Request, Response};
 
 use crate::ipc::run_ipc_server;
 
 use super::Message;
 use n16_application::{ipc::RequestHandler, single_window::SingleApplicationManager};
-use n16_launcher::Launcher;
 use n16_theme::Base16Theme;
 
 pub struct Shell {
-  launcher: SingleApplicationManager<Launcher, Message>,
+  launcher: SingleApplicationManager<n16_launcher::Launcher, Message>,
+  bar: SingleApplicationManager<n16_bar::Bar, Message>,
 }
 
 impl Shell {
-  pub fn new(launcher: Launcher) -> (Self, Task<Message>) {
+  pub fn new(launcher: n16_launcher::Launcher, bar: n16_bar::Bar) -> (Self, Task<Message>) {
     (
       Self {
         launcher: SingleApplicationManager::new(launcher, Message::Launcher),
+        bar: SingleApplicationManager::new(bar, Message::Bar),
       },
       Task::done(Message::Init),
     )
@@ -41,16 +42,11 @@ impl Shell {
       Message::Init => Task::none(),
 
       Message::Launcher(launcher_message) => self.launcher.update(launcher_message),
+      Message::Bar(bar_message) => self.bar.update(bar_message),
 
-      Message::Request(request, reply_channel) => match request {
-        Request::Launcher(launcher_request) => self
-          .launcher
-          .handle_request(launcher_request, reply_channel),
+      Message::Request(request, reply_channel) => self.handle_request(request, reply_channel),
 
-        _ => Task::none(),
-      },
-
-      _ => Task::none(),
+      Message::LayershellAction(_) => Task::none(),
     }
   }
 
@@ -64,5 +60,29 @@ impl Shell {
 
   pub fn remove_id(&mut self, window: window::Id) {
     println!("remove_id called with window {:?}", window);
+  }
+}
+
+impl RequestHandler for Shell {
+  type Request = Request;
+  type Message = Message;
+
+  fn handle_request(
+    &mut self,
+    request: Self::Request,
+    reply_channel: iced::futures::channel::oneshot::Sender<n16_ipc::Reply>,
+  ) -> Task<Self::Message> {
+    match request {
+      Request::Version => {
+        let _ = reply_channel.send(Response::version().reply_ok());
+        Task::none()
+      }
+
+      Request::Launcher(launcher_request) => self
+        .launcher
+        .handle_request(launcher_request, reply_channel),
+
+      Request::Bar(bar_request) => self.bar.handle_request(bar_request, reply_channel),
+    }
   }
 }

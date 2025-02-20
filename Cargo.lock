@@ -2338,6 +2338,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "n16-bar"
+version = "0.1.0"
+dependencies = [
+ "iced",
+ "iced_layershell",
+ "n16-application",
+ "n16-ipc",
+ "n16-theme",
+ "n16-widget",
+]
+
+[[package]]
 name = "n16-daemon"
 version = "0.1.0"
 dependencies = [
@@ -2345,6 +2357,7 @@ dependencies = [
  "iced",
  "iced_layershell",
  "n16-application",
+ "n16-bar",
  "n16-ipc",
  "n16-launcher",
  "n16-theme",

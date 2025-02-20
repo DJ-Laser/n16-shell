@@ -1,19 +1,13 @@
 [package]
-name = "n16-daemon"
+name = "n16-bar"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 n16-theme.workspace = true
+n16-widget.workspace = true
 n16-application.workspace = true
 n16-ipc.workspace = true
 
-n16-launcher.workspace = true
-n16-bar.workspace = true
-
 iced.workspace = true
 iced_layershell.workspace = true
-
-serde_json.workspace = true
-
-async-net = "2.0.0"

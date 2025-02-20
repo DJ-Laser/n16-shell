@@ -12,7 +12,6 @@ use futures::{Stream, StreamExt};
 
 use iced::futures::SinkExt;
 use iced::stream;
-use n16_ipc::Response;
 use n16_ipc::{Reply, Request};
 
 type Output = mpsc::Sender<(Request, oneshot::Sender<Reply>)>;
@@ -66,16 +65,9 @@ async fn handle_stream(stream: UnixStream, output: Output) -> io::Result<()> {
 }
 
 async fn process_request(request: Request, mut output: Output) -> Option<Reply> {
-  let reply = match request {
-    Request::Version => Response::version().reply_ok(),
-    Request::Launcher(_) => {
-      let (sender, reciever) = oneshot::channel();
+  let (sender, reciever) = oneshot::channel();
+  output.send((request, sender)).await.ok()?;
 
-      output.send((request, sender)).await.ok()?;
-
-      reciever.await.ok()?
-    }
-  };
-
+  let reply = reciever.await.ok()?;
   Some(reply)
 }

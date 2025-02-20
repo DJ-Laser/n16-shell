@@ -6,6 +6,7 @@ use n16_ipc::Reply;
 pub enum Message {
   Init,
   Launcher(n16_launcher::Message),
+  Bar(n16_bar::Message),
   LayershellAction(LayershellCustomActionsWithId),
   Request(n16_ipc::Request, oneshot::Sender<Reply>),
 }

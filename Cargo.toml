@@ -1,6 +1,8 @@
 [workspace]
 members = [
-  "n16-application", "n16-daemon",
+  "n16-application",
+  "n16-bar",
+  "n16-daemon",
   "n16-ipc",
   "n16-launcher",
   "n16-theme",
@@ -10,10 +12,12 @@ members = [
 [workspace.dependencies]
 n16-theme = { path = "./n16-theme" }
 n16-widget = { path = "./n16-widget" }
-n16-launcher = { path = "./n16-launcher" }
 n16-application = { path = "./n16-application" }
 n16-ipc = { path = "./n16-ipc" }
 n16-daemon = { path = "./n16-daemon" }
+
+n16-launcher = { path = "./n16-launcher" }
+n16-bar = { path = "./n16-bar" }
 
 iced = { version = "0.13.1", features = ["advanced", "image", "svg"] }
 iced_layershell = "0.13.0"

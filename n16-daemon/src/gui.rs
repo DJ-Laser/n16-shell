@@ -3,6 +3,7 @@ use iced_layershell::build_pattern::daemon;
 use iced_layershell::build_pattern::MainSettings;
 use iced_layershell::settings::{LayerShellSettings, StartMode};
 
+use n16_bar::Bar;
 use n16_launcher::providers::{ApplicationProvider, PowerManagementProvider};
 use n16_launcher::Launcher;
 use n16_theme::Base16Theme;
@@ -37,7 +38,9 @@ pub fn run_iced_daemon() -> Result<(), iced_layershell::Error> {
   launcher.add_provider(ApplicationProvider::new());
   launcher.add_provider(PowerManagementProvider::new());
 
-  let shell = Shell::new(launcher);
+  let bar = Bar::new();
+
+  let shell = Shell::new(launcher, bar);
 
   daemon("N16 Shell", Shell::update, Shell::view, Shell::remove_id)
     .subscription(Shell::subscription)
