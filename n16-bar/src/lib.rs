@@ -1,4 +1,6 @@
-use iced::Task;
+use component::clock;
+use iced::widget::{row, Space};
+use iced::{time, Length, Subscription, Task};
 use iced_layershell::reexport::{Anchor, KeyboardInteractivity, NewLayerShellSettings};
 
 use n16_application::{
@@ -7,8 +9,11 @@ use n16_application::{
 };
 use n16_ipc::bar::{self, Request, Response};
 
+mod component;
+
 #[derive(Debug, Clone)]
 pub enum Message {
+  Tick(chrono::DateTime<chrono::Local>),
   Hide,
   Show,
 }
@@ -19,23 +24,29 @@ impl TryInto<ShellAction> for Message {
   fn try_into(self) -> Result<ShellAction, Self::Error> {
     match self {
       Self::Show => Ok(ShellAction::Open(NewLayerShellSettings {
-        size: Some((0, 50)),
+        size: Some((0, 30)),
         anchor: Anchor::Bottom | Anchor::Left | Anchor::Right,
         keyboard_interactivity: KeyboardInteractivity::None,
-        exclusive_zone: Some(50),
+        exclusive_zone: Some(30),
         ..Default::default()
       })),
 
       Self::Hide => Ok(ShellAction::Close),
+
+      _ => Err(self),
     }
   }
 }
 
-pub struct Bar {}
+pub struct Bar {
+  now: chrono::DateTime<chrono::Local>,
+}
 
 impl Bar {
   pub fn new() -> Self {
-    Self {}
+    Self {
+      now: chrono::offset::Local::now(),
+    }
   }
 }
 
@@ -44,12 +55,27 @@ impl ShellApplication for Bar {
 
   fn update(&mut self, message: Self::Message) -> iced::Task<Self::Message> {
     match message {
+      Message::Tick(time) => {
+        self.now = time;
+        Task::none()
+      }
+
       _ => Task::none(),
     }
   }
 
   fn view(&self) -> iced::Element<'_, Self::Message, n16_theme::Base16Theme> {
-    "todo".into()
+    row![
+      Space::with_width(Length::Fill),
+      clock::view(self.now).into()
+    ]
+    .padding(5)
+    .into()
+  }
+
+  fn subscription(&self) -> Subscription<Message> {
+    time::every(time::Duration::from_millis(500))
+      .map(|_| Message::Tick(chrono::offset::Local::now()))
   }
 }
 

@@ -19,7 +19,7 @@ n16-daemon = { path = "./n16-daemon" }
 n16-launcher = { path = "./n16-launcher" }
 n16-bar = { path = "./n16-bar" }
 
-iced = { version = "0.13.1", features = ["advanced", "image", "svg"] }
+iced = { version = "0.13.1", features = ["tokio", "advanced", "image", "svg"] }
 iced_layershell = "0.13.0"
 iced_futures = "0.13.2"
 
