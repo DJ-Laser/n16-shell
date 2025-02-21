@@ -17,12 +17,14 @@ n16-shell is written in rust for better compatibility with niri and because rust
   - Loads desktop entries according to the XDG desktop standard
   - Loads icon themes according to the XDG icon standard (theme selection planned, current behavior defaults to `hicolor`)
   - Search for applications by name (category search planned)
+  - **(Partial)** Non-application actions (power management, calculator, nix-shell)
   - **(Planned)** Customizable application catagories (messaging, games, etc)
-  - **(Planned)** Non-application actions (power management, calculator, nix-shell)
 
-- ### (Future) Colapsable bar
-  - **(Future)** Hidden during normal use
-  - **(Future)** Slides up from bottom on keybind activation
+- ### (Partial) Colapsable bar
+
+  - Barebones bar that shows the time
+  - **(Planned)** Hidden during normal use
+  - **(Planned)** Slides up from bottom on keybind activation
   - **(Future)** Shows niri workspaces and open applications
 
 ## Technologies used
