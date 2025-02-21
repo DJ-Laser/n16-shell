@@ -4,7 +4,6 @@ use n16_ipc::Reply;
 
 #[derive(Debug)]
 pub enum Message {
-  Init,
   Launcher(n16_launcher::Message),
   Bar(n16_bar::Message),
   LayershellAction(LayershellCustomActionsWithId),

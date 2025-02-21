@@ -5,7 +5,7 @@ use n16_application::{
   ipc::RequestHandler,
   single_window::{ShellAction, ShellApplication},
 };
-use n16_ipc::bar;
+use n16_ipc::bar::{self, Request, Response};
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -19,10 +19,10 @@ impl TryInto<ShellAction> for Message {
   fn try_into(self) -> Result<ShellAction, Self::Error> {
     match self {
       Self::Show => Ok(ShellAction::Open(NewLayerShellSettings {
-        size: Some((0, 100)),
+        size: Some((0, 50)),
         anchor: Anchor::Bottom | Anchor::Left | Anchor::Right,
         keyboard_interactivity: KeyboardInteractivity::None,
-        exclusive_zone: Some(100),
+        exclusive_zone: Some(50),
         ..Default::default()
       })),
 
@@ -63,6 +63,16 @@ impl RequestHandler for Bar {
     request: Self::Request,
     reply_channel: iced::futures::channel::oneshot::Sender<n16_ipc::Reply>,
   ) -> Task<Self::Message> {
-    todo!()
+    match request {
+      Request::Show => {
+        reply_channel.send(Response::handled().reply_ok());
+        Task::done(Message::Show)
+      }
+
+      Request::Hide => {
+        reply_channel.send(Response::handled().reply_ok());
+        Task::done(Message::Hide)
+      }
+    }
   }
 }

@@ -21,12 +21,13 @@ impl Shell {
         launcher: SingleApplicationManager::new(launcher, Message::Launcher),
         bar: SingleApplicationManager::new(bar, Message::Bar),
       },
-      Task::done(Message::Init),
+      Task::done(Message::Bar(n16_bar::Message::Show)),
     )
   }
 
   fn try_view(&self, window: window::Id) -> ControlFlow<Element<'_, Message, Base16Theme>> {
     self.launcher.view(window)?;
+    self.bar.view(window)?;
     ControlFlow::Continue(())
   }
 
@@ -39,8 +40,6 @@ impl Shell {
 
   pub fn update(&mut self, message: Message) -> Task<Message> {
     match message {
-      Message::Init => Task::none(),
-
       Message::Launcher(launcher_message) => self.launcher.update(launcher_message),
       Message::Bar(bar_message) => self.bar.update(bar_message),
 
