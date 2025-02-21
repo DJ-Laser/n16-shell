@@ -65,12 +65,12 @@ impl RequestHandler for Bar {
   ) -> Task<Self::Message> {
     match request {
       Request::Show => {
-        reply_channel.send(Response::handled().reply_ok());
+        let _ = reply_channel.send(Response::handled().reply_ok());
         Task::done(Message::Show)
       }
 
       Request::Hide => {
-        reply_channel.send(Response::handled().reply_ok());
+        let _ = reply_channel.send(Response::handled().reply_ok());
         Task::done(Message::Hide)
       }
     }

@@ -213,7 +213,7 @@ impl RequestHandler for Launcher {
   ) -> Task<Self::Message> {
     match request {
       Request::Open => {
-        reply_channel.send(Response::handled().reply_ok()).ok();
+        let _ = reply_channel.send(Response::handled().reply_ok());
         self.update_listings();
         Task::batch([
           text_input::focus(SEARCH_INPUT_ID),
@@ -221,7 +221,7 @@ impl RequestHandler for Launcher {
         ])
       }
       Request::Close => {
-        reply_channel.send(Response::handled().reply_ok()).ok();
+        let _ = reply_channel.send(Response::handled().reply_ok());
         Task::done(Message::Close)
       }
     }
