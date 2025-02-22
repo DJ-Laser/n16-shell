@@ -59,7 +59,8 @@ impl Shell {
   }
 
   pub fn remove_id(&mut self, window: window::Id) {
-    println!("remove_id called with window {:?}", window);
+    self.launcher.remove_id(window);
+    self.bar.remove_id(window);
   }
 }
 

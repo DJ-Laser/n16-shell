@@ -65,17 +65,16 @@ where
             },
           ))
         } else {
-          println!("Open called with window {:?}", self.window);
           None
         }
       }
+
       ShellAction::LayershellAction(action) => {
         Some(LayershellCustomActionsWithId::new(self.window, action))
       }
+
       ShellAction::Close => {
         if let Some(window) = self.window {
-          self.window = None;
-
           Some(LayershellCustomActionsWithId::new(
             None,
             LayershellCustomActions::RemoveWindow(window),
@@ -122,6 +121,17 @@ where
       self.window.clone().into_iter().collect(),
       self.map_fn.clone(),
     )
+  }
+
+  pub fn remove_id(&mut self, window: window::Id) -> ControlFlow<()> {
+    if let Some(own_window) = self.window {
+      if own_window == window {
+        self.window = None;
+        return ControlFlow::Break(());
+      }
+    }
+
+    ControlFlow::Continue(())
   }
 }
 
