@@ -42,20 +42,30 @@
       '';
     };
 
-    packages.${system}.n16-shell = pkgs.rustPlatform.buildRustPackage rec {
-      pname = "n16-shell";
-      version = "0.1.0";
-      src = ./.;
+    packages.${system}.n16-shell =
+      (pkgs.makeRustPlatform {
+        cargo = rustToolchain;
+        rustc = rustToolchain;
+      })
+      .buildRustPackage rec {
+        pname = "n16-shell";
+        version = "0.1.0";
+        src = ./.;
 
-      cargoLock = {
-        lockFile = ./Cargo.lock;
+        cargoLock = {
+          lockFile = ./Cargo.lock;
+        };
+
+        buildInputs = icedDeps;
+        postFixup = ''
+          patchelf --add-rpath ${lib.makeLibraryPath icedDeps} $out/bin/n16
+        '';
+
+        meta = {
+          mainProgram = "n16";
+          platforms = lib.platforms.linux;
+        };
       };
-
-      buildInputs = icedDeps;
-      postFixup = ''
-        patchelf --add-rpath ${lib.makeLibraryPath icedDeps} $out/bin/${pname}
-      '';
-    };
 
     defaultPackage.${system} = self.packages.${system}.n16-shell;
 
