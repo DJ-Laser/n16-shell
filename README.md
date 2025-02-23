@@ -2,6 +2,8 @@
 
 ### base16 themed layershell components for niri
 
+[![built with garnix](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fgarnix.io%2Fapi%2Fbadges%2Fdj-laser%2Fn16-shell)](https://garnix.io/repo/dj-laser/n16-shell)
+
 ![image](https://cloud-mxs6qgq8r-hack-club-bot.vercel.app/1screenshot_from_2025-01-07_15-42-31.png)
 
 n16-shell is a collection of shell components for my nixos rice, focusing on the niri window manager and using the wayland layer_shell protocol to appear as a non-tiling window.
