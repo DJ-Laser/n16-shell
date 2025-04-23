@@ -33,6 +33,7 @@ serde_json = "1.0.138"
 
 itertools = "0.14.0"
 git-version = "0.3.9"
+rustix = { version = "1.0.5", features = ["process"]}
 
 [package]
 name = "n16-shell"

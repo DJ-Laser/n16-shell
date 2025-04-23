@@ -1,4 +1,5 @@
 use std::io;
+use std::path::Path;
 
 use async_net::unix::{UnixListener, UnixStream};
 
@@ -18,7 +19,7 @@ type Output = mpsc::Sender<(Request, oneshot::Sender<Reply>)>;
 
 pub fn run_ipc_server() -> impl Stream<Item = (Request, oneshot::Sender<Reply>)> {
   stream::channel(100, |output| async move {
-    let socket_path = n16_ipc::get_socket_path().unwrap();
+    let socket_path = Path::new(n16_ipc::socket_path());
 
     if socket_path.exists() {
       // Remove old socket file

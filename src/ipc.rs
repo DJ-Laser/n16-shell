@@ -7,10 +7,7 @@ use std::{
 use n16_ipc::{Reply, Request};
 
 pub fn send_request(request: Request) -> io::Result<Reply> {
-  let mut stream = UnixStream::connect(
-    n16_ipc::get_socket_path()
-      .map_err(|message| io::Error::new(io::ErrorKind::NotFound, message))?,
-  )?;
+  let mut stream = UnixStream::connect(n16_ipc::socket_path())?;
 
   let mut buf = serde_json::to_vec(&request)?;
   buf.push(b'\n');

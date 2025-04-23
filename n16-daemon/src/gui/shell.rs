@@ -79,6 +79,11 @@ impl RequestHandler for Shell {
         Task::none()
       }
 
+      Request::Ping => {
+        let _ = reply_channel.send(Response::Ping.reply_ok());
+        Task::none()
+      }
+
       Request::Launcher(launcher_request) => self
         .launcher
         .handle_request(launcher_request, reply_channel),

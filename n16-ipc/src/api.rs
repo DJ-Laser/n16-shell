@@ -7,6 +7,8 @@ pub mod launcher;
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum Request {
   Version,
+  Ping,
+
   Launcher(launcher::Request),
   Bar(bar::Request),
 }
@@ -25,7 +27,9 @@ pub enum Response {
   Handled,
   /// The `n16_ipc::VERSION_STRING` of the daemon.
   Version(String),
-  /// A response from `n16-launcher`
+  /// Response to `Ping` requests
+  Ping,
+
   Launcher(launcher::Response),
   Bar(bar::Response),
 }

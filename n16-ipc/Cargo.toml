@@ -9,3 +9,4 @@ serde_json.workspace = true
 
 git-version.workspace = true
 
+rustix.workspace = true
