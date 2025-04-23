@@ -2402,7 +2402,7 @@ checksum = "16cf681a23b4d0a43fc35024c176437f9dcd818db34e0f42ab456a0ee5ad497b"
 
 [[package]]
 name = "n16-application"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "iced",
  "iced_futures",
@@ -2413,7 +2413,7 @@ dependencies = [
 
 [[package]]
 name = "n16-bar"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "chrono",
  "iced",
@@ -2426,7 +2426,7 @@ dependencies = [
 
 [[package]]
 name = "n16-daemon"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-net",
  "iced",
@@ -2441,7 +2441,7 @@ dependencies = [
 
 [[package]]
 name = "n16-ipc"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "git-version",
  "serde",
@@ -2450,7 +2450,7 @@ dependencies = [
 
 [[package]]
 name = "n16-launcher"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "freedesktop-desktop-entry",
  "iced",
@@ -2467,7 +2467,7 @@ dependencies = [
 
 [[package]]
 name = "n16-shell"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "n16-daemon",
@@ -2478,7 +2478,7 @@ dependencies = [
 
 [[package]]
 name = "n16-theme"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "iced",
  "iced_layershell",
@@ -2486,7 +2486,7 @@ dependencies = [
 
 [[package]]
 name = "n16-widget"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "iced",
  "n16-theme",
