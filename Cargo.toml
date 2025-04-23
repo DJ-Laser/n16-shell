@@ -1,7 +1,7 @@
 [workspace.package]
 name = "n16-shell"
 version = "0.1.1"
-edition = "2021"
+edition = "2024"
 
 [workspace]
 members = [
