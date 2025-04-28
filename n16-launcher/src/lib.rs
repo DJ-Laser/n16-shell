@@ -1,7 +1,9 @@
+use std::time::Duration;
+
 use component::search::SEARCH_INPUT_ID;
 use iced::keyboard::key;
 use iced::widget::{column, container, horizontal_rule, text_input};
-use iced::{gradient, Element, Length, Subscription, Task};
+use iced::{Element, Length, Subscription, Task, gradient, time};
 
 use component::{listing, search};
 use iced_layershell::reexport::{Anchor, NewLayerShellSettings};
@@ -26,6 +28,7 @@ pub enum Message {
   SelectPrevListing,
   RunSelected,
   ListingClicked(usize),
+  FocusInput,
 }
 
 impl TryInto<ShellAction> for Message {
@@ -140,6 +143,8 @@ impl ShellApplication for Launcher {
         self.scroll_to_selected()
       }
 
+      Message::FocusInput => text_input::focus(SEARCH_INPUT_ID),
+
       _ => Task::none(),
     }
   }
@@ -215,10 +220,11 @@ impl RequestHandler for Launcher {
       Request::Open => {
         let _ = reply_channel.send(Response::handled().reply_ok());
         self.update_listings();
-        Task::batch([
-          text_input::focus(SEARCH_INPUT_ID),
-          Task::done(Message::Open),
-        ])
+
+        Task::done(Message::Open).chain(Task::future(async {
+          tokio::time::sleep(Duration::from_millis(250)).await;
+          Message::FocusInput
+        }))
       }
       Request::Close => {
         let _ = reply_channel.send(Response::handled().reply_ok());

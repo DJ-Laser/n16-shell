@@ -2470,6 +2470,7 @@ dependencies = [
  "n16-widget",
  "phf",
  "tini",
+ "tokio",
  "xdg",
 ]
 

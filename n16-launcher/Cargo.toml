@@ -12,6 +12,8 @@ n16-ipc.workspace = true
 iced.workspace = true
 iced_layershell.workspace = true
 
+tokio.workspace = true
+
 itertools.workspace = true
 
 freedesktop-desktop-entry = "0.7.5"
