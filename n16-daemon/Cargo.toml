@@ -16,4 +16,5 @@ iced_layershell.workspace = true
 
 serde_json.workspace = true
 
-async-net = "2.0.0"
+tokio.workspace = true
+tokio-stream.workspace = true

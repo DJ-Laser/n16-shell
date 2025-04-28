@@ -31,6 +31,9 @@ iced_futures = "0.13.2"
 serde = "1.0.217"
 serde_json = "1.0.138"
 
+tokio = { version = "1.44.2", features = ["net", "io-util"] }
+tokio-stream = { version = "0.1.17", features = ["net"] }
+
 itertools = "0.14.0"
 git-version = "0.3.9"
 rustix = { version = "1.0.5", features = ["process"]}
