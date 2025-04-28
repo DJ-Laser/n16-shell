@@ -3,7 +3,7 @@ use std::time::Duration;
 use component::search::SEARCH_INPUT_ID;
 use iced::keyboard::key;
 use iced::widget::{column, container, horizontal_rule, text_input};
-use iced::{Element, Length, Subscription, Task, gradient, time};
+use iced::{Element, Length, Subscription, Task, gradient};
 
 use component::{listing, search};
 use iced_layershell::reexport::{Anchor, NewLayerShellSettings};
@@ -110,7 +110,13 @@ impl ShellApplication for Launcher {
 
   fn update(&mut self, message: Message) -> Task<Message> {
     match message {
-      Message::RunSelected => self.listings[self.filtered_listings[self.selected_idx]].execute(),
+      Message::RunSelected => {
+        if let Some(listing_idx) = self.filtered_listings.get(self.selected_idx) {
+          self.listings[*listing_idx].execute()
+        } else {
+          Task::none()
+        }
+      }
 
       Message::ListingClicked(idx) => self.listings[idx].execute(),
 
