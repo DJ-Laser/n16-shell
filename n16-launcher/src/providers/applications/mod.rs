@@ -1,7 +1,7 @@
 use std::{collections::HashMap, path::PathBuf};
 
 use freedesktop_desktop_entry::{self as desktop, DesktopEntry};
-use icon_theme::{get_icon_themes, IconTheme};
+use icon_theme::{IconTheme, get_icon_themes};
 use icons::get_icon;
 use itertools::Itertools;
 use listing::ListingData;

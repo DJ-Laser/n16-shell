@@ -1,3 +1,5 @@
+use std::mem;
+use std::sync::Arc;
 use std::time::Duration;
 
 use component::search::SEARCH_INPUT_ID;
@@ -13,15 +15,20 @@ use n16_application::single_window::{ShellAction, ShellApplication};
 use n16_ipc::launcher::{self, Request, Response};
 use n16_theme::Base16Theme;
 use n16_widget::scrolled_column;
+use tokio::sync::Mutex;
 
 mod component;
 pub mod listings;
 pub mod providers;
 
+type Providers = Arc<Mutex<Vec<Box<dyn Provider>>>>;
+type Listings = Vec<Box<dyn Listing>>;
+
 #[derive(Debug, Clone)]
 pub enum Message {
+  OpenLayerShell,
+  CloseLayerShell,
   Open,
-  Close,
   ListingExecuted,
   SearchQueryChanged(String),
   SelectNextListing,
@@ -29,6 +36,7 @@ pub enum Message {
   RunSelected,
   ListingClicked(usize),
   FocusInput,
+  UpdatedListings(Listings),
 }
 
 impl TryInto<ShellAction> for Message {
@@ -36,14 +44,14 @@ impl TryInto<ShellAction> for Message {
 
   fn try_into(self) -> Result<ShellAction, Self::Error> {
     match self {
-      Self::Open => Ok(ShellAction::Open(NewLayerShellSettings {
+      Self::OpenLayerShell => Ok(ShellAction::Open(NewLayerShellSettings {
         size: Some((1000, 600)),
         anchor: Anchor::Top,
         margin: Some((200, 0, 0, 0)),
         ..Default::default()
       })),
 
-      Self::Close => Ok(ShellAction::Close),
+      Self::CloseLayerShell => Ok(ShellAction::Close),
 
       _ => Err(self),
     }
@@ -52,8 +60,8 @@ impl TryInto<ShellAction> for Message {
 
 #[derive(Default)]
 pub struct Launcher {
-  providers: Vec<Box<dyn Provider>>,
-  listings: Vec<Box<dyn Listing>>,
+  providers: Providers,
+  listings: Listings,
   filtered_listings: Vec<usize>,
   query: String,
   selected_idx: usize,
@@ -62,7 +70,7 @@ pub struct Launcher {
 impl Launcher {
   pub fn new() -> Self {
     Self {
-      providers: Vec::new(),
+      providers: Default::default(),
       listings: Vec::new(),
       filtered_listings: Vec::new(),
       query: String::new(),
@@ -71,25 +79,29 @@ impl Launcher {
   }
 
   pub fn add_provider<P: Provider + 'static>(&mut self, provider: P) {
-    self.providers.push(Box::new(provider));
+    let mut providers = self.providers.blocking_lock();
+    providers.push(Box::new(provider));
+  }
+
+  pub async fn add_provider_async<P: Provider + 'static>(&mut self, provider: P) {
+    let mut providers = self.providers.lock().await;
+    providers.push(Box::new(provider));
   }
 
   fn scroll_to_selected(&self) -> Task<Message> {
     Task::none()
   }
 
-  fn update_listings(&mut self) {
-    self.listings.clear();
+  async fn update_listings(providers: Providers) -> Listings {
+    let mut providers = providers.lock().await;
 
-    let listings = self
-      .providers
+    let listings = providers
       .iter_mut()
       .map(|provider| provider.update_listings())
       .flatten()
       .flatten();
 
-    self.listings.extend(listings);
-    self.filter_listings();
+    listings.collect()
   }
 
   fn filter_listings(&mut self) {
@@ -103,6 +115,13 @@ impl Launcher {
         .map(|(idx, _listing)| idx),
     );
   }
+
+  fn update_query(&mut self, new_query: &str) {
+    self.query.clear();
+    self.query.push_str(new_query);
+    self.selected_idx = 0;
+    self.filter_listings();
+  }
 }
 
 impl ShellApplication for Launcher {
@@ -110,6 +129,21 @@ impl ShellApplication for Launcher {
 
   fn update(&mut self, message: Message) -> Task<Message> {
     match message {
+      Message::Open => {
+        self.update_query("");
+
+        Task::batch([
+          Task::future(async {
+            tokio::time::sleep(Duration::from_millis(250)).await;
+            Message::FocusInput
+          }),
+          Task::perform(
+            Self::update_listings(self.providers.clone()),
+            Message::UpdatedListings,
+          ),
+        ])
+      }
+
       Message::RunSelected => {
         if let Some(listing_idx) = self.filtered_listings.get(self.selected_idx) {
           self.listings[*listing_idx].execute()
@@ -120,12 +154,10 @@ impl ShellApplication for Launcher {
 
       Message::ListingClicked(idx) => self.listings[idx].execute(),
 
-      Message::ListingExecuted => Task::done(Message::Close),
+      Message::ListingExecuted => Task::done(Message::CloseLayerShell),
 
-      Message::SearchQueryChanged(query) => {
-        self.query = query;
-        self.selected_idx = 0;
-        self.filter_listings();
+      Message::SearchQueryChanged(new_query) => {
+        self.update_query(&new_query);
         Task::none()
       }
 
@@ -150,6 +182,13 @@ impl ShellApplication for Launcher {
       }
 
       Message::FocusInput => text_input::focus(SEARCH_INPUT_ID),
+
+      Message::UpdatedListings(new_listings) => {
+        let _ = mem::replace(&mut self.listings, new_listings);
+        self.filter_listings();
+
+        Task::none()
+      }
 
       _ => Task::none(),
     }
@@ -200,12 +239,12 @@ impl ShellApplication for Launcher {
 
   fn subscription(&self) -> Subscription<Message> {
     iced::event::listen_with(|event, _status, _window| match event {
-      iced::Event::Window(iced::window::Event::Unfocused) => Some(Message::Close),
+      iced::Event::Window(iced::window::Event::Unfocused) => Some(Message::CloseLayerShell),
       iced::Event::Keyboard(iced::keyboard::Event::KeyPressed { key, .. }) => match key {
         iced::keyboard::Key::Named(key::Named::ArrowUp) => Some(Message::SelectPrevListing),
         iced::keyboard::Key::Named(key::Named::ArrowDown) => Some(Message::SelectNextListing),
         iced::keyboard::Key::Named(key::Named::Enter) => Some(Message::RunSelected),
-        iced::keyboard::Key::Named(key::Named::Escape) => Some(Message::Close),
+        iced::keyboard::Key::Named(key::Named::Escape) => Some(Message::CloseLayerShell),
         _ => None,
       },
       _ => None,
@@ -225,16 +264,15 @@ impl RequestHandler for Launcher {
     match request {
       Request::Open => {
         let _ = reply_channel.send(Response::handled().reply_ok());
-        self.update_listings();
 
-        Task::done(Message::Open).chain(Task::future(async {
-          tokio::time::sleep(Duration::from_millis(250)).await;
-          Message::FocusInput
-        }))
+        Task::batch([
+          Task::done(Message::OpenLayerShell),
+          Task::done(Message::Open),
+        ])
       }
       Request::Close => {
         let _ = reply_channel.send(Response::handled().reply_ok());
-        Task::done(Message::Close)
+        Task::done(Message::CloseLayerShell)
       }
     }
   }

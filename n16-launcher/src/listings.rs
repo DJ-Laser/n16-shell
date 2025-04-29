@@ -1,13 +1,14 @@
 use std::fmt::Debug;
 
+use dyn_clone::DynClone;
 use iced::{
-  widget::{image, svg},
   Task,
+  widget::{image, svg},
 };
 
 use crate::Message;
 
-pub trait Provider {
+pub trait Provider: Send {
   fn name(&self) -> &'static str;
 
   fn priority(&self) -> i32;
@@ -22,7 +23,7 @@ pub enum ListingIcon {
   Vector(svg::Handle),
 }
 
-pub trait Listing: Debug {
+pub trait Listing: DynClone + Debug + Send {
   fn name(&self) -> &str;
 
   fn icon(&self) -> Option<&ListingIcon>;
@@ -30,6 +31,8 @@ pub trait Listing: Debug {
   fn executable(&self) -> bool;
   fn execute(&self) -> Task<Message>;
 }
+
+dyn_clone::clone_trait_object!(Listing);
 
 #[derive(Debug)]
 pub enum SectionKind {}
