@@ -2,9 +2,10 @@ use std::mem;
 use std::sync::Arc;
 use std::time::Duration;
 
+use calculator::Calculator;
 use component::search::SEARCH_INPUT_ID;
 use iced::keyboard::key;
-use iced::widget::{column, container, horizontal_rule, text_input};
+use iced::widget::{column, container, horizontal_rule, text, text_input};
 use iced::{Element, Length, Subscription, Task, gradient};
 
 use component::{listing, search};
@@ -13,10 +14,11 @@ use listings::{Listing, Provider};
 use n16_application::ipc::RequestHandler;
 use n16_application::single_window::{ShellAction, ShellApplication};
 use n16_ipc::launcher::{self, Request, Response};
-use n16_theme::Base16Theme;
+use n16_theme::{Base16Theme, rule};
 use n16_widget::scrolled_column;
 use tokio::sync::Mutex;
 
+pub mod calculator;
 mod component;
 pub mod listings;
 pub mod providers;
@@ -37,6 +39,7 @@ pub enum Message {
   ListingClicked(usize),
   FocusInput,
   UpdatedListings(Listings),
+  CalculatorResult(Option<String>),
 }
 
 impl TryInto<ShellAction> for Message {
@@ -60,6 +63,9 @@ impl TryInto<ShellAction> for Message {
 
 #[derive(Default)]
 pub struct Launcher {
+  calculator: Calculator,
+  calculator_result: Option<String>,
+
   providers: Providers,
   listings: Listings,
   filtered_listings: Vec<usize>,
@@ -70,6 +76,9 @@ pub struct Launcher {
 impl Launcher {
   pub fn new() -> Self {
     Self {
+      calculator: Default::default(),
+      calculator_result: None,
+
       providers: Default::default(),
       listings: Vec::new(),
       filtered_listings: Vec::new(),
@@ -116,11 +125,13 @@ impl Launcher {
     );
   }
 
-  fn update_query(&mut self, new_query: &str) {
+  fn update_query(&mut self, new_query: &str) -> Task<Message> {
     self.query.clear();
     self.query.push_str(new_query);
     self.selected_idx = 0;
     self.filter_listings();
+
+    Task::done(self.calculator.calculate_preview(&self.query)).map(Message::CalculatorResult)
   }
 }
 
@@ -129,20 +140,17 @@ impl ShellApplication for Launcher {
 
   fn update(&mut self, message: Message) -> Task<Message> {
     match message {
-      Message::Open => {
-        self.update_query("");
-
-        Task::batch([
-          Task::future(async {
-            tokio::time::sleep(Duration::from_millis(250)).await;
-            Message::FocusInput
-          }),
-          Task::perform(
-            Self::update_listings(self.providers.clone()),
-            Message::UpdatedListings,
-          ),
-        ])
-      }
+      Message::Open => Task::batch([
+        self.update_query(""),
+        Task::future(async {
+          tokio::time::sleep(Duration::from_millis(250)).await;
+          Message::FocusInput
+        }),
+        Task::perform(
+          Self::update_listings(self.providers.clone()),
+          Message::UpdatedListings,
+        ),
+      ]),
 
       Message::RunSelected => {
         if let Some(listing_idx) = self.filtered_listings.get(self.selected_idx) {
@@ -156,10 +164,7 @@ impl ShellApplication for Launcher {
 
       Message::ListingExecuted => Task::done(Message::CloseLayerShell),
 
-      Message::SearchQueryChanged(new_query) => {
-        self.update_query(&new_query);
-        Task::none()
-      }
+      Message::SearchQueryChanged(new_query) => self.update_query(&new_query),
 
       Message::SelectNextListing => {
         if self.selected_idx >= self.filtered_listings.len() - 1 {
@@ -190,6 +195,11 @@ impl ShellApplication for Launcher {
         Task::none()
       }
 
+      Message::CalculatorResult(result) => {
+        self.calculator_result = result;
+        Task::none()
+      }
+
       _ => Task::none(),
     }
   }
@@ -208,11 +218,16 @@ impl ShellApplication for Launcher {
       ));
     }
 
-    let column = column![
-      search::view(&self.query).into(),
-      horizontal_rule(20),
-      listings
-    ];
+    let mut column = column![search::view(&self.query).into()];
+
+    if let Some(result) = &self.calculator_result {
+      column =
+        column.push(horizontal_rule(20).style(|theme: &Base16Theme| rule::colored(theme.base02)));
+      column = column.push(text(result));
+    }
+
+    column = column.push(horizontal_rule(20));
+    column = column.push(listings);
 
     let inner = container(column)
       .height(Length::Fill)
