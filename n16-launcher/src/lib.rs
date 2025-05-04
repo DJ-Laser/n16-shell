@@ -167,7 +167,9 @@ impl ShellApplication for Launcher {
       Message::SearchQueryChanged(new_query) => self.update_query(&new_query),
 
       Message::SelectNextListing => {
-        if self.selected_idx >= self.filtered_listings.len() - 1 {
+        if self.filtered_listings.len() == 0 {
+          self.selected_idx = 0;
+        } else if self.selected_idx >= self.filtered_listings.len() - 1 {
           self.selected_idx = 0;
         } else {
           self.selected_idx += 1;
@@ -177,7 +179,9 @@ impl ShellApplication for Launcher {
       }
 
       Message::SelectPrevListing => {
-        if self.selected_idx == 0 {
+        if self.filtered_listings.len() == 0 {
+          self.selected_idx = 0;
+        } else if self.selected_idx == 0 {
           self.selected_idx = self.filtered_listings.len() - 1;
         } else {
           self.selected_idx -= 1;
