@@ -1,5 +1,3 @@
-use std::env::args;
-
 use ipc::send_request;
 use n16_ipc::{Request, launcher};
 

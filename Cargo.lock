@@ -2482,7 +2482,6 @@ dependencies = [
  "n16-ipc",
  "n16-theme",
  "n16-widget",
- "phf",
  "tini",
  "tokio",
  "xdg",

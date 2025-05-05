@@ -5,7 +5,6 @@ use icon_theme::{IconTheme, get_icon_themes};
 use icons::get_icon;
 use itertools::Itertools;
 use listing::ListingData;
-use phf::phf_map;
 use xdg::BaseDirectories;
 
 use crate::listings::{Listing, Provider};
@@ -13,41 +12,6 @@ use crate::listings::{Listing, Provider};
 mod icon_theme;
 mod icons;
 mod listing;
-
-static CATEGORY_TO_SECTION: phf::Map<&'static str, &'static str> = phf_map! {
-  "Game" => "Gaming",
-  "ActionGame" => "Gaming",
-  "AdventureGame" => "Gaming",
-
-  "Development" => "Development",
-  "TextEditor" => "Development",
-  "IDE" => "Development",
-
-  "InstantMessaging" => "Internet",
-  "WebBrowser" => "Internet",
-  "Chat" => "Internet",
-
-  "System" => "System",
-  "Settings" => "System",
-  "HardwareSettings" => "System",
-  "Printing" => "System",
-
-  "$NO_MATCHES" => "Other",
-};
-
-fn get_section(entry: &DesktopEntry) -> &'static str {
-  if let Some(categories) = entry.categories() {
-    for category in categories {
-      if let Some(section) = CATEGORY_TO_SECTION.get(category) {
-        return section;
-      }
-    }
-  }
-
-  CATEGORY_TO_SECTION
-    .get("$NO_MATCHES")
-    .expect("Should have a fallback section name")
-}
 
 pub fn get_data_dirs(env: &BaseDirectories) -> Vec<PathBuf> {
   let mut data_dirs: Vec<PathBuf> = vec![];

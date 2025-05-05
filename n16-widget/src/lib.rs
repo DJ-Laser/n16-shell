@@ -2,6 +2,7 @@ mod scrolled_column;
 
 mod helpers;
 
+#[allow(unused)]
 pub use helpers::*;
 
 #[doc(no_inline)]

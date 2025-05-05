@@ -1,11 +1,11 @@
 use iced::color;
-use iced_layershell::build_pattern::daemon;
 use iced_layershell::build_pattern::MainSettings;
+use iced_layershell::build_pattern::daemon;
 use iced_layershell::settings::{LayerShellSettings, StartMode};
 
 use n16_bar::Bar;
-use n16_launcher::providers::{ApplicationProvider, PowerManagementProvider};
 use n16_launcher::Launcher;
+use n16_launcher::providers::{ApplicationProvider, PowerManagementProvider};
 use n16_theme::Base16Theme;
 
 pub use message::*;

@@ -1,6 +1,6 @@
 use std::{ffi::OsStr, path::PathBuf, process};
 
-use iced::{advanced::svg, widget::image, Task};
+use iced::{Task, advanced::svg, widget::image};
 
 use crate::listings::{Listing, ListingIcon};
 
@@ -9,6 +9,8 @@ pub struct ListingData {
   name: String,
   icon: Option<ListingIcon>,
   command: Option<String>,
+
+  #[allow(unused)]
   desktop_file: PathBuf,
 }
 
