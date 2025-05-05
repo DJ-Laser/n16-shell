@@ -47,6 +47,10 @@ edition.workspace = true
 name = "n16"
 path = "src/main.rs"
 
+[[bin]]
+name = "n16-daemon"
+path = "n16-daemon/src/main.rs"
+
 [dependencies]
 n16-ipc.workspace = true
 n16-daemon.workspace = true
