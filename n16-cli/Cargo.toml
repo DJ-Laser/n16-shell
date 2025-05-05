@@ -1,0 +1,18 @@
+[package]
+name = "n16-cli"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+n16-ipc.workspace = true
+
+serde.workspace = true
+serde_json.workspace = true
+
+clap = { version = "4.5.30", features = ["derive"] }
+
+[build-dependencies]
+n16-ipc.workspace = true
+
+clap = { version = "4.5.30", features = ["derive"] }
+clap_complete = "4.5.48"

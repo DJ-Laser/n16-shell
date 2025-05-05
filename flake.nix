@@ -57,6 +57,12 @@
         };
 
         buildInputs = icedDeps;
+
+        preBuild = ''
+          export N16_COMPLETION_OUT_DIR=$out/share/bash_completions
+          mkdir -p $N16_COMPLETION_OUT_DIR
+        '';
+
         postFixup = ''
           patchelf --add-rpath ${lib.makeLibraryPath icedDeps} $out/bin/n16-daemon
         '';
