@@ -58,7 +58,7 @@
 
         buildInputs = icedDeps;
         postFixup = ''
-          patchelf --add-rpath ${lib.makeLibraryPath icedDeps} $out/bin/n16
+          patchelf --add-rpath ${lib.makeLibraryPath icedDeps} $out/bin/n16-daemon
         '';
 
         meta = {
