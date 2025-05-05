@@ -5,24 +5,21 @@ edition = "2024"
 
 [workspace]
 members = [
-  "n16-application",
-  "n16-bar",
-  "n16-daemon",
-  "n16-ipc",
-  "n16-launcher",
-  "n16-theme",
-  "n16-widget",
+  "core/*",
+  "apps/*",
+  "n16-daemon"
 ]
 
 [workspace.dependencies]
-n16-theme = { path = "./n16-theme" }
-n16-widget = { path = "./n16-widget" }
-n16-application = { path = "./n16-application" }
-n16-ipc = { path = "./n16-ipc" }
+n16-theme = { path = "./core/theme" }
+n16-widget = { path = "./core/widget" }
+n16-application = { path = "./core/application" }
+n16-ipc = { path = "./core/ipc" }
+
 n16-daemon = { path = "./n16-daemon" }
 
-n16-launcher = { path = "./n16-launcher" }
-n16-bar = { path = "./n16-bar" }
+n16-launcher = { path = "./apps/launcher" }
+n16-bar = { path = "./apps/bar" }
 
 iced = { version = "0.13.1", features = ["tokio", "advanced", "image", "svg"] }
 iced_layershell = "0.13.0"
@@ -45,7 +42,7 @@ edition.workspace = true
 
 [[bin]]
 name = "n16"
-path = "src/main.rs"
+path = "n16-cli/main.rs"
 
 [[bin]]
 name = "n16-daemon"
