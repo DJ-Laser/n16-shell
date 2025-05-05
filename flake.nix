@@ -59,7 +59,7 @@
         buildInputs = icedDeps;
 
         preBuild = ''
-          export N16_COMPLETION_OUT_DIR=$out/share/bash_completions
+          export N16_COMPLETION_OUT_DIR=$out/share/bash-completion/completions
           mkdir -p $N16_COMPLETION_OUT_DIR
         '';
 
