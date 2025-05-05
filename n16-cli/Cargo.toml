@@ -3,6 +3,10 @@ name = "n16-cli"
 version.workspace = true
 edition.workspace = true
 
+[[bin]]
+name = "n16"
+path = "src/main.rs"
+
 [dependencies]
 n16-ipc.workspace = true
 
