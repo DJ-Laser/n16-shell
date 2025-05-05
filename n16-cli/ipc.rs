@@ -25,3 +25,7 @@ pub fn send_request(request: Request) -> io::Result<Reply> {
 
   Ok(reply)
 }
+
+pub fn send_request_ok(request: Request) {
+  send_request(request).unwrap().unwrap();
+}
