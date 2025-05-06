@@ -1,10 +1,9 @@
 [package]
-name = "n16-theme"
+name = "n16-config"
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
-iced.workspace = true
-iced_layershell.workspace = true
+n16-theme.workspace = true
 
 serde.workspace = true

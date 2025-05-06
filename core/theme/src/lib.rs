@@ -3,50 +3,7 @@ use iced::Color;
 pub use components::*;
 
 mod components;
-
-#[derive(Debug)]
-#[allow(non_snake_case)]
-pub struct Base16Hex<'a> {
-  pub base00: &'a str,
-  pub base01: &'a str,
-  pub base02: &'a str,
-  pub base03: &'a str,
-  pub base04: &'a str,
-  pub base05: &'a str,
-  pub base06: &'a str,
-  pub base07: &'a str,
-  pub base08: &'a str,
-  pub base09: &'a str,
-  pub base0A: &'a str,
-  pub base0B: &'a str,
-  pub base0C: &'a str,
-  pub base0D: &'a str,
-  pub base0E: &'a str,
-  pub base0F: &'a str,
-}
-
-impl<'a> Base16Hex<'a> {
-  pub fn parse(self) -> Option<Base16Theme> {
-    Some(Base16Theme {
-      base00: Color::parse(self.base00)?,
-      base02: Color::parse(self.base00)?,
-      base01: Color::parse(self.base00)?,
-      base03: Color::parse(self.base00)?,
-      base04: Color::parse(self.base00)?,
-      base05: Color::parse(self.base00)?,
-      base06: Color::parse(self.base00)?,
-      base07: Color::parse(self.base00)?,
-      base08: Color::parse(self.base00)?,
-      base09: Color::parse(self.base00)?,
-      base0A: Color::parse(self.base00)?,
-      base0B: Color::parse(self.base00)?,
-      base0C: Color::parse(self.base00)?,
-      base0D: Color::parse(self.base00)?,
-      base0E: Color::parse(self.base00)?,
-      base0F: Color::parse(self.base00)?,
-    })
-  }
-}
+mod serialize;
 
 #[derive(Debug, Clone, PartialEq)]
 #[allow(non_snake_case)]

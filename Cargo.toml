@@ -18,6 +18,7 @@ n16-theme = { path = "./core/theme" }
 n16-widget = { path = "./core/widget" }
 n16-application = { path = "./core/application" }
 n16-ipc = { path = "./core/ipc" }
+n16-config = { path = "./core/config" }
 
 n16-launcher = { path = "./apps/launcher" }
 n16-bar = { path = "./apps/bar" }

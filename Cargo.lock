@@ -2463,6 +2463,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "n16-config"
+version = "0.1.1"
+dependencies = [
+ "n16-theme",
+ "serde",
+]
+
+[[package]]
 name = "n16-daemon"
 version = "0.1.1"
 dependencies = [
@@ -2513,6 +2521,7 @@ version = "0.1.1"
 dependencies = [
  "iced",
  "iced_layershell",
+ "serde",
 ]
 
 [[package]]
