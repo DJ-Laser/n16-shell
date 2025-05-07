@@ -2478,6 +2478,7 @@ dependencies = [
  "iced_layershell",
  "n16-application",
  "n16-bar",
+ "n16-config",
  "n16-ipc",
  "n16-launcher",
  "n16-theme",

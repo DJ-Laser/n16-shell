@@ -7,6 +7,7 @@ edition.workspace = true
 n16-theme.workspace = true
 n16-application.workspace = true
 n16-ipc.workspace = true
+n16-config.workspace = true
 
 n16-launcher.workspace = true
 n16-bar.workspace = true

@@ -1,6 +1,6 @@
 use std::ops::ControlFlow;
 
-use iced::{window, Element, Subscription, Task};
+use iced::{Element, Subscription, Task, window};
 use n16_ipc::{Request, Response};
 
 use crate::ipc::run_ipc_server;
@@ -10,19 +10,30 @@ use n16_application::{ipc::RequestHandler, single_window::SingleApplicationManag
 use n16_theme::Base16Theme;
 
 pub struct Shell {
+  config: n16_config::Config,
+
   launcher: SingleApplicationManager<n16_launcher::Launcher, Message>,
   bar: SingleApplicationManager<n16_bar::Bar, Message>,
 }
 
 impl Shell {
+  pub fn load_config() -> Option<n16_config::Config> {
+    Some(Default::default())
+  }
+
   pub fn new(launcher: n16_launcher::Launcher, bar: n16_bar::Bar) -> (Self, Task<Message>) {
     (
       Self {
+        config: Self::load_config().unwrap_or_default(),
         launcher: SingleApplicationManager::new(launcher, Message::Launcher),
         bar: SingleApplicationManager::new(bar, Message::Bar),
       },
       Task::done(Message::Bar(n16_bar::Message::Show)),
     )
+  }
+
+  pub fn theme(&self) -> Base16Theme {
+    self.config.theme().clone()
   }
 
   fn try_view(&self, window: window::Id) -> ControlFlow<Element<'_, Message, Base16Theme>> {
