@@ -7,4 +7,4 @@ edition.workspace = true
 iced.workspace = true
 iced_layershell.workspace = true
 
-serde.workspace = true
+knuffel.workspace = true

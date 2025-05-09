@@ -1,7 +1,7 @@
+use knuffel::Decode;
 use n16_theme::Base16Theme;
-use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Decode)]
 pub struct Config {
   theme: Base16Theme,
 }

@@ -6,4 +6,4 @@ edition.workspace = true
 [dependencies]
 n16-theme.workspace = true
 
-serde.workspace = true
+knuffel.workspace = true
