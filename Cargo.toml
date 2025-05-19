@@ -24,7 +24,7 @@ n16-launcher = { path = "./apps/launcher" }
 n16-bar = { path = "./apps/bar" }
 
 iced = { version = "0.13.1", features = ["tokio", "advanced", "image", "svg"] }
-iced_layershell = "0.13.0"
+iced_layershell = "0.13.6"
 iced_futures = "0.13.2"
 
 serde = { version = "1.0.217", features = ["derive"] }
