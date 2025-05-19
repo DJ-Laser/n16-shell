@@ -1,8 +1,8 @@
-use knuffel::Decode;
 use n16_theme::Base16Theme;
 
-#[derive(Debug, Clone, Default, Decode)]
+#[derive(Debug, Clone, Default, knuffel::Decode)]
 pub struct Config {
+  #[knuffel(child)]
   theme: Base16Theme,
 }
 

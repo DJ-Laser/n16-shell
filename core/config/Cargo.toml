@@ -7,3 +7,5 @@ edition.workspace = true
 n16-theme.workspace = true
 
 knuffel.workspace = true
+
+miette = { version="5.10.0", features=["fancy"] }

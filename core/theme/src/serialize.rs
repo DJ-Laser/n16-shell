@@ -1,5 +1,3 @@
-#![allow(non_snake_case)]
-
 use iced::Color;
 
 use crate::Base16Theme;
@@ -68,17 +66,17 @@ struct Base16Repr {
   #[knuffel(child, unwrap(argument))]
   pub base09: HexColor,
   #[knuffel(child, unwrap(argument))]
-  pub base0A: HexColor,
+  pub base0a: HexColor,
   #[knuffel(child, unwrap(argument))]
-  pub base0B: HexColor,
+  pub base0b: HexColor,
   #[knuffel(child, unwrap(argument))]
-  pub base0C: HexColor,
+  pub base0c: HexColor,
   #[knuffel(child, unwrap(argument))]
-  pub base0D: HexColor,
+  pub base0d: HexColor,
   #[knuffel(child, unwrap(argument))]
-  pub base0E: HexColor,
+  pub base0e: HexColor,
   #[knuffel(child, unwrap(argument))]
-  pub base0F: HexColor,
+  pub base0f: HexColor,
 }
 
 impl Into<Base16Theme> for Base16Repr {
@@ -94,12 +92,12 @@ impl Into<Base16Theme> for Base16Repr {
       base07: self.base07.0,
       base08: self.base08.0,
       base09: self.base09.0,
-      base0A: self.base0A.0,
-      base0B: self.base0B.0,
-      base0C: self.base0C.0,
-      base0D: self.base0D.0,
-      base0E: self.base0E.0,
-      base0F: self.base0F.0,
+      base0A: self.base0a.0,
+      base0B: self.base0b.0,
+      base0C: self.base0c.0,
+      base0D: self.base0d.0,
+      base0E: self.base0e.0,
+      base0F: self.base0f.0,
     }
   }
 }

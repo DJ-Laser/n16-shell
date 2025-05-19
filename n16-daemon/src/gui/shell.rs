@@ -17,14 +17,10 @@ pub struct Shell {
 }
 
 impl Shell {
-  pub fn load_config() -> Option<n16_config::Config> {
-    Some(Default::default())
-  }
-
   pub fn new(launcher: n16_launcher::Launcher, bar: n16_bar::Bar) -> (Self, Task<Message>) {
     (
       Self {
-        config: Self::load_config().unwrap_or_default(),
+        config: n16_config::load_config_file().unwrap_or_default(),
         launcher: SingleApplicationManager::new(launcher, Message::Launcher),
         bar: SingleApplicationManager::new(bar, Message::Bar),
       },
