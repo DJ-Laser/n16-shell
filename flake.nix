@@ -36,42 +36,12 @@
   in {
     devShells.${system}.default = pkgs.mkShell {
       buildInputs = with pkgs; [rustToolchain alejandra] ++ icedDeps;
-      shellHook = ''
-        export RUST_SRC_PATH =${rustToolchain}/lib/rustlib/src/rust/src
-        export LD_LIBRARY_PATH=${lib.makeLibraryPath icedDeps}:$LD_LIBRARY_PATH
-      '';
+
+      RUST_SRC_PATH = "${rustToolchain}/lib/rustlib/src/rust/src";
+      LD_LIBRARY_PATH = lib.makeLibraryPath icedDeps;
     };
 
-    packages.${system}.n16-shell =
-      (pkgs.makeRustPlatform {
-        cargo = rustToolchain;
-        rustc = rustToolchain;
-      })
-      .buildRustPackage rec {
-        pname = "n16-shell";
-        version = "0.1.1";
-        src = ./.;
-
-        cargoLock = {
-          lockFile = ./Cargo.lock;
-        };
-
-        buildInputs = icedDeps;
-
-        preBuild = ''
-          export N16_COMPLETION_OUT_DIR=$out/share/bash-completion/completions
-          mkdir -p $N16_COMPLETION_OUT_DIR
-        '';
-
-        postFixup = ''
-          patchelf --add-rpath ${lib.makeLibraryPath icedDeps} $out/bin/n16-daemon
-        '';
-
-        meta = {
-          mainProgram = "n16";
-          platforms = lib.platforms.linux;
-        };
-      };
+    packages.${system}.n16-shell = pkgs.callPackage ./nix/n16-shell.nix {};
 
     defaultPackage.${system} = self.packages.${system}.n16-shell;
 
