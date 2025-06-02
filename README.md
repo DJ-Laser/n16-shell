@@ -19,7 +19,7 @@ n16-shell is written in rust for better compatibility with niri and because rust
   - Loads desktop entries according to the XDG desktop standard
   - Loads icon themes according to the XDG icon standard (theme selection planned, current behavior defaults to `hicolor`)
   - Search for applications by name (category search planned)
-  - **(Partial)** Non-application actions (power management, calculator, nix-shell)
+  - Non-application actions (power management, calculator)
   - **(Planned)** Customizable application catagories (messaging, games, etc)
 
 - ### (Partial) Colapsable bar
@@ -28,6 +28,59 @@ n16-shell is written in rust for better compatibility with niri and because rust
   - **(Planned)** Hidden during normal use
   - **(Planned)** Slides up from bottom on keybind activation
   - **(Future)** Shows niri workspaces and open applications
+
+## Installation
+
+Run `nix shell github:dj-laser/n16-shell` to try the program without permanantly installing.
+
+Run `n16-daemon` to start the backend program.
+This will launch the bar and listen for messages to control the bar and launcher
+
+Run `n16` to control the backend by sending messages for example `n16 launcher open`.
+Use `n16 <subcommand> help` to see the available options
+
+For permanant instalation, add `github:dj-laser/n16-shell` as a flake input.
+
+This flake exports a `packages.x86_64-linux.n16-shell`, or you can use the `overlays.default` to add `n16-shell` to `pkgs`.
+
+Finally, configure `n16-daemon` to run on login.
+
+This could be done a fwe ways, such as a systemd service or through the window manager.
+
+Example using [`niri-flake`](https://https://github.com/sodiboo/niri-flake)
+
+```nix
+programs.niri = {
+  settings.spawn-at-startup = [
+    # Assuming n16-shell has been added to your packages
+    {command = ["n16-daemon"];}
+
+    # More explicit way to define it
+    # {command = ["${pkgs.n16-shell}/bin/n16-daemon"];}
+  ];
+};
+```
+
+## Configuration
+
+`n16-shell` currently looks for a config file at `$XDG_CONFIG_DIR/n16-shell/config.kdl` (kdl 1.0)
+
+The only options at the moment are changing the theme colors. `base00` through `base0F`
+
+```kdl
+// In config.kdl
+
+theme {
+  base00 "#FFFFFF"
+  base01 "#FFFFFF"
+  base02 "#FFFFFF"
+
+  // ...
+
+  base0f "#FFFFFF"
+}
+
+```
 
 ## Technologies used
 
