@@ -4,11 +4,12 @@ use crate::listings::Provider;
 
 mod listing;
 
+#[derive(Default)]
 pub struct PowerManagementProvider {}
 
 impl PowerManagementProvider {
   pub fn new() -> Self {
-    Self {}
+    Self::default()
   }
 }
 

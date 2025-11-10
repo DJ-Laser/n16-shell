@@ -62,12 +62,11 @@ impl Listing for ListingData {
 async fn run_entry_command(command: String) -> crate::Message {
   let args: Vec<&str> = command
     .split_ascii_whitespace()
-    .filter_map(|s| if s.starts_with('%') { None } else { Some(s) })
+    .filter(|s| s.starts_with('%'))
     .collect();
 
-  match process::Command::new(args[0]).args(&args[1..]).spawn() {
-    Err(error) => panic!("{}", error),
-    Ok(_) => (),
+  if let Err(error) = process::Command::new(args[0]).args(&args[1..]).spawn() {
+    panic!("{}", error)
   };
 
   crate::Message::ListingExecuted

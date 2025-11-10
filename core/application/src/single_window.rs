@@ -1,6 +1,6 @@
 use std::ops::ControlFlow;
 
-use iced::{window, Element, Subscription, Task};
+use iced::{Element, Subscription, Task, window};
 use iced_futures::MaybeSend;
 use iced_layershell::{
   actions::{LayershellCustomActions, LayershellCustomActionsWithId},
@@ -9,7 +9,7 @@ use iced_layershell::{
 
 use n16_theme::Base16Theme;
 
-use crate::{ipc::RequestHandler, subscription, ShellMessage};
+use crate::{ShellMessage, ipc::RequestHandler, subscription};
 
 pub enum ShellAction {
   Open(NewLayerShellSettings),
@@ -51,7 +51,7 @@ where
   fn map_action(&mut self, action: ShellAction) -> Option<LayershellCustomActionsWithId> {
     match action {
       ShellAction::Open(settings) => {
-        if let None = self.window {
+        if self.window.is_none() {
           let new_window = window::Id::unique();
           self.window = Some(new_window);
 
@@ -73,16 +73,9 @@ where
         Some(LayershellCustomActionsWithId::new(self.window, action))
       }
 
-      ShellAction::Close => {
-        if let Some(window) = self.window {
-          Some(LayershellCustomActionsWithId::new(
-            None,
-            LayershellCustomActions::RemoveWindow(window),
-          ))
-        } else {
-          None
-        }
-      }
+      ShellAction::Close => self.window.map(|window| {
+        LayershellCustomActionsWithId::new(None, LayershellCustomActions::RemoveWindow(window))
+      }),
     }
   }
 
@@ -104,7 +97,7 @@ where
       Ok(action) => {
         return self
           .map_action(action)
-          .map_or(Task::none(), |action| Task::done(M::from(action)))
+          .map_or(Task::none(), |action| Task::done(M::from(action)));
       }
       Err(message) => message,
     };
@@ -118,8 +111,8 @@ where
   {
     subscription::wrap_subscription(
       self.application.subscription(),
-      self.window.clone().into_iter().collect(),
-      self.map_fn.clone(),
+      self.window.into_iter().collect(),
+      self.map_fn,
     )
   }
 

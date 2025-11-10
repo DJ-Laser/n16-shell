@@ -1,6 +1,6 @@
 use component::clock;
-use iced::widget::{row, Space};
-use iced::{time, Length, Subscription, Task};
+use iced::widget::{Space, row};
+use iced::{Length, Subscription, Task, time};
 use iced_layershell::reexport::{Anchor, KeyboardInteractivity, NewLayerShellSettings};
 
 use n16_application::{
@@ -44,9 +44,7 @@ pub struct Bar {
 
 impl Bar {
   pub fn new() -> Self {
-    Self {
-      now: chrono::offset::Local::now(),
-    }
+    Self::default()
   }
 }
 
@@ -99,6 +97,14 @@ impl RequestHandler for Bar {
         let _ = reply_channel.send(Response::handled().reply_ok());
         Task::done(Message::Hide)
       }
+    }
+  }
+}
+
+impl Default for Bar {
+  fn default() -> Self {
+    Self {
+      now: chrono::offset::Local::now(),
     }
   }
 }

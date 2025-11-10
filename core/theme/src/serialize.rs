@@ -37,7 +37,7 @@ where
       }
       _ => Err(::knuffel::errors::DecodeError::scalar_kind(
         ::knuffel::decode::Kind::String,
-        &value,
+        value,
       )),
     }
   }
@@ -79,25 +79,25 @@ struct Base16Repr {
   pub base0f: HexColor,
 }
 
-impl Into<Base16Theme> for Base16Repr {
-  fn into(self) -> Base16Theme {
+impl From<Base16Repr> for Base16Theme {
+  fn from(val: Base16Repr) -> Self {
     Base16Theme {
-      base00: self.base00.0,
-      base02: self.base01.0,
-      base01: self.base02.0,
-      base03: self.base03.0,
-      base04: self.base04.0,
-      base05: self.base05.0,
-      base06: self.base06.0,
-      base07: self.base07.0,
-      base08: self.base08.0,
-      base09: self.base09.0,
-      base0A: self.base0a.0,
-      base0B: self.base0b.0,
-      base0C: self.base0c.0,
-      base0D: self.base0d.0,
-      base0E: self.base0e.0,
-      base0F: self.base0f.0,
+      base00: val.base00.0,
+      base02: val.base01.0,
+      base01: val.base02.0,
+      base03: val.base03.0,
+      base04: val.base04.0,
+      base05: val.base05.0,
+      base06: val.base06.0,
+      base07: val.base07.0,
+      base08: val.base08.0,
+      base09: val.base09.0,
+      base0A: val.base0a.0,
+      base0B: val.base0b.0,
+      base0C: val.base0c.0,
+      base0D: val.base0d.0,
+      base0E: val.base0e.0,
+      base0F: val.base0f.0,
     }
   }
 }

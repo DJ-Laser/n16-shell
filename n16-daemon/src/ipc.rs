@@ -23,10 +23,10 @@ pub fn run_ipc_server() -> impl Stream<Item = (Request, oneshot::Sender<Reply>)>
 
     if socket_path.exists() {
       // Remove old socket file
-      std::fs::remove_file(&socket_path).unwrap();
+      std::fs::remove_file(socket_path).unwrap();
     }
 
-    let listener = UnixListener::bind(&socket_path).unwrap();
+    let listener = UnixListener::bind(socket_path).unwrap();
     let listener = UnixListenerStream::new(listener);
 
     listener

@@ -6,7 +6,7 @@ use std::{
 
 use freedesktop_desktop_entry::DesktopEntry;
 
-use super::icon_theme::{IconTheme, IconType, FALLBACK_THEME};
+use super::icon_theme::{FALLBACK_THEME, IconTheme, IconType};
 
 fn find_icon_in_dir(icon_name: &str, dir: &Path) -> io::Result<Option<PathBuf>> {
   for entry in fs::read_dir(dir)? {
@@ -83,7 +83,7 @@ fn get_icon_for_theme<'s>(
         continue;
       }
 
-      if let Some(icon) = get_icon_for_theme(icon_name, &inherited, icon_themes, searched_themes) {
+      if let Some(icon) = get_icon_for_theme(icon_name, inherited, icon_themes, searched_themes) {
         return Some(icon);
       }
 
@@ -94,13 +94,13 @@ fn get_icon_for_theme<'s>(
   }
 
   if !searched_themes.contains(FALLBACK_THEME) {
-    return get_icon_for_theme(icon_name, &FALLBACK_THEME, icon_themes, searched_themes);
+    return get_icon_for_theme(icon_name, FALLBACK_THEME, icon_themes, searched_themes);
   }
 
   None
 }
 
-pub fn get_icon<'a>(
+pub fn get_icon(
   entry: &DesktopEntry,
   desired_theme: &str,
   icon_themes: &HashMap<String, IconTheme>,

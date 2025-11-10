@@ -60,7 +60,7 @@ impl IconTheme {
   }
 }
 
-pub const FALLBACK_THEME: &'static str = "hicolor";
+pub const FALLBACK_THEME: &str = "hicolor";
 
 fn find_theme_directories(theme_directory: &Path) -> Option<IconTheme> {
   let mut directories = Vec::new();
@@ -157,7 +157,7 @@ fn parse_theme_index(theme_directory: &Path) -> Option<IconTheme> {
   let directory_name = theme_directory.file_name()?.to_str()?.to_string();
   let mut inherits: Vec<String> = theme_index
     .get_vec("Icon Theme", "Inherits")
-    .unwrap_or_else(|| Vec::new());
+    .unwrap_or_else(Vec::new);
 
   // If the theme doesn't explicitly inherit from theb fallback, manually add it.
   if directory_name != FALLBACK_THEME && inherits.iter().any(|s| s == FALLBACK_THEME) {
@@ -209,16 +209,14 @@ fn parse_theme_index(theme_directory: &Path) -> Option<IconTheme> {
 
 fn get_icon_theme_dirs(icons_dir: &Path) -> io::Result<Vec<PathBuf>> {
   let mut theme_dirs = Vec::new();
-  let files = fs::read_dir(&icons_dir)?;
+  let files = fs::read_dir(icons_dir)?;
 
-  for entry in files {
-    if let Ok(entry) = entry {
-      let is_dir = fs::metadata(entry.path())
-        .map(|f| f.is_dir())
-        .unwrap_or(false);
-      if is_dir {
-        theme_dirs.push(entry.path());
-      }
+  for entry in files.into_iter().flatten() {
+    let is_dir = fs::metadata(entry.path())
+      .map(|f| f.is_dir())
+      .unwrap_or(false);
+    if is_dir {
+      theme_dirs.push(entry.path());
     }
   }
 

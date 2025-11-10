@@ -1,7 +1,7 @@
-use iced::advanced::widget::{tree, Tree};
-use iced::advanced::{layout, mouse, overlay, Layout, Widget};
+use iced::advanced::widget::{Tree, tree};
+use iced::advanced::{Layout, Widget, layout, mouse, overlay};
 use iced::widget::Column;
-use iced::{alignment, event, Element, Event, Length, Padding, Pixels, Rectangle, Size, Vector};
+use iced::{Element, Event, Length, Padding, Pixels, Rectangle, Size, Vector, alignment, event};
 use n16_theme::Base16Theme;
 
 /// A thin wrapper around `Column` that lets it be translated in the draw phase
@@ -137,7 +137,7 @@ where
   }
 }
 
-impl<'a, Message, Renderer> Default for ScrolledColumn<'a, Message, Renderer>
+impl<Message, Renderer> Default for ScrolledColumn<'_, Message, Renderer>
 where
   Renderer: iced::advanced::Renderer,
 {
@@ -155,8 +155,8 @@ impl<'a, Message, Theme, Renderer: iced::advanced::Renderer>
   }
 }
 
-impl<'a, Message, Theme, Renderer> Widget<Message, Theme, Renderer>
-  for ScrolledColumn<'a, Message, Theme, Renderer>
+impl<Message, Theme, Renderer> Widget<Message, Theme, Renderer>
+  for ScrolledColumn<'_, Message, Theme, Renderer>
 where
   Renderer: iced::advanced::Renderer,
 {

@@ -106,8 +106,7 @@ impl Launcher {
 
     let listings = providers
       .iter_mut()
-      .map(|provider| provider.update_listings())
-      .flatten()
+      .filter_map(|provider| provider.update_listings())
       .flatten();
 
     listings.collect()
@@ -167,9 +166,9 @@ impl ShellApplication for Launcher {
       Message::SearchQueryChanged(new_query) => self.update_query(&new_query),
 
       Message::SelectNextListing => {
-        if self.filtered_listings.len() == 0 {
-          self.selected_idx = 0;
-        } else if self.selected_idx >= self.filtered_listings.len() - 1 {
+        if self.filtered_listings.is_empty()
+          || self.selected_idx >= self.filtered_listings.len() - 1
+        {
           self.selected_idx = 0;
         } else {
           self.selected_idx += 1;
@@ -179,7 +178,7 @@ impl ShellApplication for Launcher {
       }
 
       Message::SelectPrevListing => {
-        if self.filtered_listings.len() == 0 {
+        if self.filtered_listings.is_empty() {
           self.selected_idx = 0;
         } else if self.selected_idx == 0 {
           self.selected_idx = self.filtered_listings.len() - 1;

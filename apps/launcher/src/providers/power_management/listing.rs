@@ -1,6 +1,6 @@
 use std::process;
 
-use crate::{listings::Listing, Message};
+use crate::{Message, listings::Listing};
 
 #[derive(Debug, Clone)]
 pub enum PowerManagementListing {
@@ -21,12 +21,11 @@ impl PowerManagementListing {
   }
 
   async fn run_command(self) -> crate::Message {
-    match process::Command::new("systemctl")
+    if let Err(error) = process::Command::new("systemctl")
       .args(self.subcommand())
       .spawn()
     {
-      Err(error) => panic!("{}", error),
-      Ok(_) => (),
+      panic!("{}", error)
     };
 
     Message::ListingExecuted

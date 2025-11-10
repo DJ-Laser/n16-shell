@@ -45,7 +45,7 @@ impl ApplicationProvider {
       return None;
     }
 
-    let icon = get_icon(&entry, "hicolor", &self.icon_themes, &self.data_dirs);
+    let icon = get_icon(entry, "hicolor", &self.icon_themes, &self.data_dirs);
 
     let name = entry.name(&self.locales)?;
     let exec = entry.exec();
@@ -54,7 +54,7 @@ impl ApplicationProvider {
       name.to_string(),
       icon,
       exec.map(str::to_string),
-      PathBuf::from(entry.path.to_owned()),
+      entry.path.to_owned(),
     ))
   }
 

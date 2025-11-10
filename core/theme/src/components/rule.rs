@@ -9,7 +9,7 @@ impl Catalog for Base16Theme {
   type Class<'a> = StyleFn<'a, Self>;
 
   fn default<'a>() -> Self::Class<'a> {
-    Box::new(|theme| base(theme))
+    Box::new(base)
   }
 
   fn style(&self, class: &Self::Class<'_>) -> Style {
@@ -19,7 +19,7 @@ impl Catalog for Base16Theme {
 
 pub fn colored(color: Color) -> Style {
   Style {
-    color: color,
+    color,
     width: 1,
     radius: 0.0.into(),
     fill_mode: FillMode::Full,
