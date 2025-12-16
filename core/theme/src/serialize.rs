@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use iced::Color;
 
 use crate::Base16Theme;
@@ -29,10 +31,9 @@ where
   ) -> Result<Self, knuffel::errors::DecodeError<S>> {
     match &**value {
       knuffel::ast::Literal::String(s) => {
-        let color = Color::parse(s).ok_or(knuffel::errors::DecodeError::conversion(
-          value,
-          "expected a valid hex string",
-        ));
+        let color = Color::from_str(s).map_err(|_| {
+          knuffel::errors::DecodeError::conversion(value, "expected a valid hex string")
+        });
         color.map(Self)
       }
       _ => Err(::knuffel::errors::DecodeError::scalar_kind(

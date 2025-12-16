@@ -5,7 +5,7 @@ use std::time::Duration;
 use calculator::Calculator;
 use component::search::SEARCH_INPUT_ID;
 use iced::keyboard::key;
-use iced::widget::{column, container, horizontal_rule, text, text_input};
+use iced::widget::{column, container, operation, rule, text};
 use iced::{Element, Length, Subscription, Task, gradient};
 
 use component::{listing, search};
@@ -14,7 +14,7 @@ use listings::{Listing, Provider};
 use n16_application::ipc::RequestHandler;
 use n16_application::single_window::{ShellAction, ShellApplication};
 use n16_ipc::launcher::{self, Request, Response};
-use n16_theme::{Base16Theme, rule};
+use n16_theme::Base16Theme;
 use n16_widget::scrolled_column;
 use tokio::sync::Mutex;
 
@@ -189,7 +189,7 @@ impl ShellApplication for Launcher {
         self.scroll_to_selected()
       }
 
-      Message::FocusInput => text_input::focus(SEARCH_INPUT_ID),
+      Message::FocusInput => operation::focus(SEARCH_INPUT_ID),
 
       Message::UpdatedListings(new_listings) => {
         let _ = mem::replace(&mut self.listings, new_listings);
@@ -224,12 +224,21 @@ impl ShellApplication for Launcher {
     let mut column = column![search::view(&self.query).into()];
 
     if let Some(result) = &self.calculator_result {
-      column =
-        column.push(horizontal_rule(20).style(|theme: &Base16Theme| rule::colored(theme.base02)));
+      column = column.push(
+        column![
+          rule::horizontal(1).style(|theme: &Base16Theme| n16_theme::rule::colored(theme.base02))
+        ]
+        .height(20),
+      );
       column = column.push(text(result));
     }
 
-    column = column.push(horizontal_rule(20));
+    column = column.push(
+      column![
+        rule::horizontal(1).style(|theme: &Base16Theme| n16_theme::rule::colored(theme.base02))
+      ]
+      .height(20),
+    );
     column = column.push(listings);
 
     let inner = container(column)

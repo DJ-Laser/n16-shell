@@ -1,11 +1,11 @@
 use std::{any::TypeId, hash::Hash};
 
+use iced::Subscription;
 use iced::advanced::subscription;
 use iced::futures;
 use iced::window;
-use iced::Subscription;
-use iced_futures::subscription::{Event, Recipe};
 use iced_futures::MaybeSend;
+use iced_futures::subscription::Recipe;
 
 pub fn wrap_subscription<A, B, F>(
   subscription: Subscription<A>,
@@ -20,11 +20,11 @@ where
   let recipes = subscription::into_recipes(subscription);
 
   Subscription::batch(recipes.into_iter().map(move |recipe| {
-    subscription::from_recipe(FilterMap::new(
+    subscription::from_recipe(FilterMap {
       recipe,
-      window_filter.clone(),
-      map_fn.clone(),
-    ))
+      window_filter: window_filter.clone(),
+      map_fn: map_fn.clone(),
+    })
   }))
 }
 
@@ -35,19 +35,6 @@ where
   recipe: Box<dyn Recipe<Output = A>>,
   window_filter: Vec<window::Id>,
   map_fn: F,
-}
-
-impl<A, B, F> FilterMap<A, B, F>
-where
-  F: Fn(A) -> B + 'static,
-{
-  fn new(recipe: Box<dyn Recipe<Output = A>>, window_filter: Vec<window::Id>, map_fn: F) -> Self {
-    Self {
-      recipe,
-      window_filter,
-      map_fn,
-    }
-  }
 }
 
 impl<A, B, F> Recipe for FilterMap<A, B, F>
@@ -68,18 +55,19 @@ where
     self: Box<Self>,
     input: iced_futures::subscription::EventStream,
   ) -> iced_futures::BoxStream<Self::Output> {
-    use futures::future;
     use futures::StreamExt;
+    use futures::future;
 
     let map_fn = self.map_fn;
     let window_filter = self.window_filter;
 
     let input = input.filter(move |event| match event {
-      Event::Interaction {
+      subscription::Event::Interaction {
         window,
         event: _,
         status: _,
       } => future::ready(window_filter.contains(window)),
+      subscription::Event::SystemThemeChanged(_) => future::ready(true),
     });
 
     Box::pin(self.recipe.stream(input.boxed()).map(map_fn))

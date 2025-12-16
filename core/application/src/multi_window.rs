@@ -1,13 +1,13 @@
 use std::ops::ControlFlow;
 
-use iced::{window, Element, Subscription, Task};
-use iced_layershell::actions::LayershellCustomActionsWithId;
+use iced::{Element, Subscription, Task, window};
+use iced_layershell::actions::LayershellCustomActionWithId;
 use n16_theme::Base16Theme;
 
-use crate::{ipc::RequestHandler, ShellMessage};
+use crate::{ShellMessage, ipc::RequestHandler, subscription};
 
 pub trait ShellApplication {
-  type Message: ShellMessage + TryInto<LayershellCustomActionsWithId, Error = Self::Message>;
+  type Message: ShellMessage + TryInto<LayershellCustomActionWithId, Error = Self::Message>;
 
   fn update(&mut self, message: Self::Message) -> Task<Self::Message>;
 
@@ -18,16 +18,18 @@ pub trait ShellApplication {
   }
 }
 
-pub struct MultiApplicationManager<A: ShellApplication> {
+pub struct MultiApplicationManager<A: ShellApplication, M: From<LayershellCustomActionWithId>> {
   application: A,
   windows: Vec<window::Id>,
+  map_fn: fn(A::Message) -> M,
 }
 
-impl<A: ShellApplication> MultiApplicationManager<A> {
-  pub fn new(application: A) -> Self {
+impl<A: ShellApplication, M: From<LayershellCustomActionWithId>> MultiApplicationManager<A, M> {
+  pub fn new(application: A, map_fn: fn(A::Message) -> M) -> Self {
     Self {
       application,
       windows: Vec::new(),
+      map_fn,
     }
   }
 
@@ -43,12 +45,37 @@ impl<A: ShellApplication> MultiApplicationManager<A> {
   pub fn update(&mut self, message: A::Message) -> Task<A::Message> {
     self.application.update(message)
   }
+
+  pub fn subscription(&self) -> Subscription<M>
+  where
+    M: 'static,
+  {
+    subscription::wrap_subscription(
+      self.application.subscription(),
+      self.windows.clone(),
+      self.map_fn,
+    )
+  }
+
+  pub fn remove_window(&mut self, window: window::Id) -> ControlFlow<()> {
+    if let Some(index) = self
+      .windows
+      .iter()
+      .position(|own_window| window == *own_window)
+    {
+      self.windows.remove(index);
+      return ControlFlow::Break(());
+    }
+
+    ControlFlow::Continue(())
+  }
 }
 
-impl<A> RequestHandler for MultiApplicationManager<A>
+impl<A, M> RequestHandler for MultiApplicationManager<A, M>
 where
   A: ShellApplication,
   A: RequestHandler<Message = <A as ShellApplication>::Message>,
+  M: ShellMessage + From<LayershellCustomActionWithId>,
 {
   type Request = A::Request;
   type Message = <A as RequestHandler>::Message;

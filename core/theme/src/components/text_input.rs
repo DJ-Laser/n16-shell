@@ -1,5 +1,5 @@
-use iced::widget::text_input::{Catalog, Status, Style, StyleFn};
 use iced::Border;
+use iced::widget::text_input::{Catalog, Status, Style, StyleFn};
 
 use crate::Base16Theme;
 
@@ -35,7 +35,7 @@ pub fn base(theme: &Base16Theme, status: Status) -> Style {
       border: Border { ..active.border },
       ..active
     },
-    Status::Focused => Style {
+    Status::Focused { .. } => Style {
       border: Border { ..active.border },
       ..active
     },

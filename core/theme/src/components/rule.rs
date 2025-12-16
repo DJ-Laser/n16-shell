@@ -20,9 +20,9 @@ impl Catalog for Base16Theme {
 pub fn colored(color: Color) -> Style {
   Style {
     color,
-    width: 1,
     radius: 0.0.into(),
     fill_mode: FillMode::Full,
+    snap: true,
   }
 }
 

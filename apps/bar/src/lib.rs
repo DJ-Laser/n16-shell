@@ -64,7 +64,7 @@ impl ShellApplication for Bar {
 
   fn view(&self) -> iced::Element<'_, Self::Message, n16_theme::Base16Theme> {
     row![
-      Space::with_width(Length::Fill),
+      Space::new().width(Length::Fill),
       clock::view(self.now).into()
     ]
     .padding(5)

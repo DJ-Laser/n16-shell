@@ -1,7 +1,7 @@
 use iced::advanced::widget::{Tree, tree};
 use iced::advanced::{Layout, Widget, layout, mouse, overlay};
 use iced::widget::Column;
-use iced::{Element, Event, Length, Padding, Pixels, Rectangle, Size, Vector, alignment, event};
+use iced::{Element, Event, Length, Padding, Pixels, Rectangle, Size, Vector, alignment};
 use n16_theme::Base16Theme;
 
 /// A thin wrapper around `Column` that lets it be translated in the draw phase
@@ -183,7 +183,12 @@ where
     }
   }
 
-  fn layout(&self, tree: &mut Tree, renderer: &Renderer, limits: &layout::Limits) -> layout::Node {
+  fn layout(
+    &mut self,
+    tree: &mut Tree,
+    renderer: &Renderer,
+    limits: &layout::Limits,
+  ) -> layout::Node {
     let inner_limits = layout::Limits::new(
       Size::new(limits.min().width, limits.min().height),
       Size::new(limits.max().width, f32::MAX),
@@ -207,7 +212,7 @@ where
   }
 
   fn operate(
-    &self,
+    &mut self,
     tree: &mut Tree,
     layout: Layout,
     renderer: &Renderer,
@@ -220,17 +225,17 @@ where
       .operate(tree, content_layout, renderer, operation);
   }
 
-  fn on_event(
+  fn update(
     &mut self,
     tree: &mut Tree,
-    event: Event,
+    event: &Event,
     layout: Layout<'_>,
     cursor: mouse::Cursor,
     renderer: &Renderer,
     clipboard: &mut dyn iced::advanced::Clipboard,
     shell: &mut iced::advanced::Shell<'_, Message>,
     _viewport: &Rectangle,
-  ) -> event::Status {
+  ) {
     let state = tree.state.downcast_ref::<State>();
     let translation = state.translation;
 
@@ -242,7 +247,7 @@ where
       _ => mouse::Cursor::Unavailable,
     };
 
-    self.inner.on_event(
+    self.inner.update(
       tree,
       event,
       content_layout,
@@ -338,16 +343,21 @@ where
   fn overlay<'b>(
     &'b mut self,
     tree: &'b mut Tree,
-    layout: Layout,
+    layout: Layout<'b>,
     renderer: &Renderer,
+    viewport: &Rectangle,
     translation: Vector,
   ) -> Option<overlay::Element<'b, Message, Theme, Renderer>> {
     let state = tree.state.downcast_ref::<State>();
+
+    let bounds = layout.bounds();
+    let visible_bounds = bounds.intersection(viewport).unwrap_or(*viewport);
 
     self.inner.overlay(
       tree,
       layout.children().next().unwrap(),
       renderer,
+      &visible_bounds,
       translation - state.translation,
     )
   }

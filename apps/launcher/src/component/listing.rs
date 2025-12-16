@@ -1,5 +1,5 @@
-use iced::widget::{button, horizontal_space, image, row, svg, text};
-use iced::{alignment, Length};
+use iced::widget::{Space, button, image, row, svg, text};
+use iced::{Length, alignment};
 use n16_theme::Base16Theme;
 
 use crate::listings::{Listing, ListingIcon};
@@ -29,7 +29,7 @@ pub fn view(
       row = row.push(svg);
     }
     None => {
-      let space = horizontal_space().width(image_size).height(image_size);
+      let space = Space::new().width(image_size).height(image_size);
       row = row.push(space);
     }
   }

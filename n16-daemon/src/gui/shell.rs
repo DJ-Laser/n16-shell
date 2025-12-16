@@ -17,15 +17,18 @@ pub struct Shell {
 }
 
 impl Shell {
-  pub fn new(launcher: n16_launcher::Launcher, bar: n16_bar::Bar) -> (Self, Task<Message>) {
-    (
-      Self {
-        config: n16_config::load_config_file().unwrap_or_default(),
-        launcher: SingleApplicationManager::new(launcher, Message::Launcher),
-        bar: SingleApplicationManager::new(bar, Message::Bar),
-      },
-      Task::done(Message::Bar(n16_bar::Message::Show)),
-    )
+  pub fn new() -> Self {
+    let mut launcher = n16_launcher::Launcher::new();
+    launcher.add_provider(n16_launcher::providers::ApplicationProvider::new());
+    launcher.add_provider(n16_launcher::providers::PowerManagementProvider::new());
+
+    let bar = n16_bar::Bar::new();
+
+    Self {
+      config: n16_config::load_config_file().unwrap_or_default(),
+      launcher: SingleApplicationManager::new(launcher, Message::Launcher),
+      bar: SingleApplicationManager::new(bar, Message::Bar),
+    }
   }
 
   pub fn theme(&self) -> Base16Theme {
@@ -53,7 +56,22 @@ impl Shell {
       Message::Request(request, reply_channel) => self.handle_request(request, reply_channel),
 
       Message::LayershellAction(_) => Task::none(),
+
+      Message::WindowClose(window) => {
+        if let ControlFlow::Continue(()) = self.remove_window(window) {
+          eprintln!("Window '{window}' closed but not registered.")
+        }
+
+        Task::none()
+      }
     }
+  }
+
+  fn remove_window(&mut self, window: window::Id) -> ControlFlow<()> {
+    self.launcher.remove_window(window)?;
+    self.bar.remove_window(window)?;
+
+    ControlFlow::Continue(())
   }
 
   pub fn subscription(&self) -> Subscription<Message> {
@@ -62,12 +80,8 @@ impl Shell {
         .map(|(request, reply_channel)| Message::Request(request, reply_channel)),
       self.launcher.subscription(),
       self.bar.subscription(),
+      iced::window::close_events().map(Message::WindowClose),
     ])
-  }
-
-  pub fn remove_id(&mut self, window: window::Id) {
-    self.launcher.remove_id(window);
-    self.bar.remove_id(window);
   }
 }
 
