@@ -1,52 +1,44 @@
-use std::{any::TypeId, hash::Hash};
+use std::hash::Hash;
 
 use iced::Subscription;
 use iced::advanced::subscription;
 use iced::futures;
 use iced::window;
-use iced_futures::MaybeSend;
 use iced_futures::subscription::Recipe;
 
-pub fn wrap_subscription<A, B, F>(
+pub fn wrap_subscription<A, B>(
   subscription: Subscription<A>,
   window_filter: Vec<window::Id>,
-  map_fn: F,
+  map_fn: fn(A) -> B,
 ) -> Subscription<B>
 where
   A: 'static,
   B: 'static,
-  F: Fn(A) -> B + 'static + MaybeSend + Clone,
 {
   let recipes = subscription::into_recipes(subscription);
 
   Subscription::batch(recipes.into_iter().map(move |recipe| {
-    subscription::from_recipe(FilterMap {
+    subscription::from_recipe(WindowFilter {
       recipe,
       window_filter: window_filter.clone(),
-      map_fn: map_fn.clone(),
     })
   }))
+  .with(map_fn)
+  .map(|(map_fn, v)| map_fn(v))
 }
 
-struct FilterMap<A, B, F>
-where
-  F: Fn(A) -> B + 'static,
-{
-  recipe: Box<dyn Recipe<Output = A>>,
+struct WindowFilter<T> {
+  recipe: Box<dyn Recipe<Output = T>>,
   window_filter: Vec<window::Id>,
-  map_fn: F,
 }
 
-impl<A, B, F> Recipe for FilterMap<A, B, F>
+impl<T> Recipe for WindowFilter<T>
 where
-  A: 'static,
-  B: 'static,
-  F: Fn(A) -> B + 'static + MaybeSend,
+  T: 'static,
 {
-  type Output = B;
+  type Output = T;
 
   fn hash(&self, state: &mut iced_futures::subscription::Hasher) {
-    TypeId::of::<F>().hash(state);
     self.window_filter.hash(state);
     self.recipe.hash(state);
   }
@@ -58,7 +50,6 @@ where
     use futures::StreamExt;
     use futures::future;
 
-    let map_fn = self.map_fn;
     let window_filter = self.window_filter;
 
     let input = input.filter(move |event| match event {
@@ -70,6 +61,6 @@ where
       subscription::Event::SystemThemeChanged(_) => future::ready(true),
     });
 
-    Box::pin(self.recipe.stream(input.boxed()).map(map_fn))
+    Box::pin(self.recipe.stream(input.boxed()))
   }
 }
