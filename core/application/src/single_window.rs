@@ -14,6 +14,7 @@ use crate::{ShellMessage, ipc::RequestHandler, subscription};
 pub enum ShellAction {
   Open(NewLayerShellSettings),
   LayershellAction(LayershellCustomAction),
+  Window(iced_layershell::actions::IcedXdgWindowSettings),
   Close,
 }
 
@@ -60,6 +61,25 @@ where
           Some(LayershellCustomActionWithId::new(
             None,
             LayershellCustomAction::NewLayerShell {
+              id: new_window,
+              settings,
+            },
+          ))
+        } else {
+          None
+        }
+      }
+
+      ShellAction::Window(settings) => {
+        if self.window.is_none() {
+          let new_window = window::Id::unique();
+          self.window = Some(new_window);
+
+          println!("Opened window {}", new_window);
+
+          Some(LayershellCustomActionWithId::new(
+            None,
+            LayershellCustomAction::NewBaseWindow {
               id: new_window,
               settings,
             },

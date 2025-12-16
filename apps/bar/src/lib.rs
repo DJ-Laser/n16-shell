@@ -1,6 +1,7 @@
 use component::clock;
 use iced::widget::{Space, row, text_input};
 use iced::{Length, Subscription, Task, time};
+use iced_layershell::actions::IcedXdgWindowSettings;
 use iced_layershell::reexport::{Anchor, KeyboardInteractivity, NewLayerShellSettings};
 
 use n16_application::{
@@ -15,7 +16,8 @@ mod component;
 pub enum Message {
   Tick(chrono::DateTime<chrono::Local>),
   Hide,
-  Show,
+  //Show,
+  Window(IcedXdgWindowSettings),
   Text(String),
 }
 
@@ -24,13 +26,14 @@ impl TryInto<ShellAction> for Message {
 
   fn try_into(self) -> Result<ShellAction, Self::Error> {
     match self {
-      Self::Show => Ok(ShellAction::Open(NewLayerShellSettings {
+      /*Self::Show => Ok(ShellAction::Open(NewLayerShellSettings {
         size: Some((0, 30)),
         anchor: Anchor::Bottom | Anchor::Left | Anchor::Right,
         keyboard_interactivity: KeyboardInteractivity::OnDemand,
         exclusive_zone: Some(30),
         ..Default::default()
-      })),
+      })),*/
+      Self::Window(s) => Ok(ShellAction::Window(s)),
 
       Self::Hide => Ok(ShellAction::Close),
 
@@ -99,7 +102,8 @@ impl RequestHandler for Bar {
     match request {
       Request::Show => {
         let _ = reply_channel.send(Response::handled().reply_ok());
-        Task::done(Message::Show)
+        //Task::done(Message::Show)
+        Task::done(Message::Window(IcedXdgWindowSettings { size: None }))
       }
 
       Request::Hide => {
