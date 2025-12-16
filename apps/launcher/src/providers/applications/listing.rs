@@ -62,11 +62,20 @@ impl Listing for ListingData {
 async fn run_entry_command(command: String) -> crate::Message {
   let args: Vec<&str> = command
     .split_ascii_whitespace()
-    .filter(|s| s.starts_with('%'))
+    .filter(|s| !s.starts_with('%'))
     .collect();
 
-  if let Err(error) = process::Command::new(args[0]).args(&args[1..]).spawn() {
-    panic!("{}", error)
+  println!("running command: {command}");
+  println!("{args:?}");
+
+  if let Err(error) = process::Command::new(args[0])
+    .args(&args[1..])
+    .stdin(process::Stdio::null())
+    .stdout(process::Stdio::null())
+    .stderr(process::Stdio::null())
+    .spawn()
+  {
+    eprintln!("{}", error);
   };
 
   crate::Message::ListingExecuted
