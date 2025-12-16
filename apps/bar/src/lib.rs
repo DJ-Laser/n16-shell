@@ -1,5 +1,5 @@
 use component::clock;
-use iced::widget::{Space, row};
+use iced::widget::{Space, row, text_input};
 use iced::{Length, Subscription, Task, time};
 use iced_layershell::reexport::{Anchor, KeyboardInteractivity, NewLayerShellSettings};
 
@@ -16,6 +16,7 @@ pub enum Message {
   Tick(chrono::DateTime<chrono::Local>),
   Hide,
   Show,
+  Text(String),
 }
 
 impl TryInto<ShellAction> for Message {
@@ -26,7 +27,7 @@ impl TryInto<ShellAction> for Message {
       Self::Show => Ok(ShellAction::Open(NewLayerShellSettings {
         size: Some((0, 30)),
         anchor: Anchor::Bottom | Anchor::Left | Anchor::Right,
-        keyboard_interactivity: KeyboardInteractivity::None,
+        keyboard_interactivity: KeyboardInteractivity::OnDemand,
         exclusive_zone: Some(30),
         ..Default::default()
       })),
@@ -40,6 +41,7 @@ impl TryInto<ShellAction> for Message {
 
 pub struct Bar {
   now: chrono::DateTime<chrono::Local>,
+  text: String,
 }
 
 impl Bar {
@@ -58,12 +60,19 @@ impl ShellApplication for Bar {
         Task::none()
       }
 
+      Message::Text(text) => {
+        self.text = text;
+
+        Task::none()
+      }
+
       _ => Task::none(),
     }
   }
 
   fn view(&self) -> iced::Element<'_, Self::Message, n16_theme::Base16Theme> {
     row![
+      text_input("Input", &self.text).on_input(Message::Text),
       Space::new().width(Length::Fill),
       clock::view(self.now).into()
     ]
@@ -105,6 +114,7 @@ impl Default for Bar {
   fn default() -> Self {
     Self {
       now: chrono::offset::Local::now(),
+      text: String::new(),
     }
   }
 }

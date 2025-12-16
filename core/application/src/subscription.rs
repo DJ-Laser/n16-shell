@@ -55,9 +55,23 @@ where
     let input = input.filter(move |event| match event {
       subscription::Event::Interaction {
         window,
-        event: _,
+        event: e,
         status: _,
-      } => future::ready(window_filter.contains(window)),
+      } => {
+        if let iced::Event::Keyboard(iced::keyboard::Event::KeyPressed { key, .. }) = e {
+          println!("Key {key:?} for window {window:?}");
+        }
+
+        if let iced::Event::Window(iced::window::Event::Focused) = e {
+          println!("Focus for window {window:?}");
+        }
+
+        if let iced::Event::Window(iced::window::Event::Unfocused) = e {
+          println!("Unfocus for window {window:?}");
+        }
+
+        future::ready(window_filter.contains(window))
+      }
       subscription::Event::SystemThemeChanged(_) => future::ready(true),
     });
 
