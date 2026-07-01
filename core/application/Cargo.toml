@@ -4,9 +4,6 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-n16-theme.workspace = true
-n16-ipc.workspace = true
-
-iced.workspace = true
-iced_layershell.workspace = true
 iced_futures.workspace = true
+n16-ipc.workspace = true
+async-trait.workspace = true

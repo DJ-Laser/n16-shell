@@ -13,6 +13,7 @@ iced.workspace = true
 iced_layershell.workspace = true
 
 tokio.workspace = true
+async-trait.workspace = true
 
 itertools.workspace = true
 

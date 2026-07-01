@@ -1,108 +1,113 @@
-use std::mem;
-use std::sync::Arc;
-use std::time::Duration;
-
-use calculator::Calculator;
-use component::search::SEARCH_INPUT_ID;
-use iced::keyboard::key;
-use iced::widget::{column, container, operation, rule, text};
-use iced::{Element, Length, Subscription, Task, gradient};
-
-use component::{listing, search};
-use iced_layershell::reexport::{Anchor, NewLayerShellSettings};
+use async_trait::async_trait;
+use iced::{Task, futures::channel::mpsc};
+use iced_layershell::{
+  actions::LayerShellCustomActionWithId, reexport::Anchor, settings::LayerShellSettings,
+};
 use listings::{Listing, Provider};
-use n16_application::ipc::RequestHandler;
-use n16_application::single_window::{ShellAction, ShellApplication};
-use n16_ipc::launcher::{self, Request, Response};
-use n16_theme::Base16Theme;
-use n16_widget::scrolled_column;
+use n16_application::{N16Application, RequestChannel, thread::IcedThread};
+use n16_ipc::launcher::Request;
+use std::sync::Arc;
+
 use tokio::sync::Mutex;
 
-pub mod calculator;
+use crate::gui::{Launcher, Message};
+
+mod calculator;
 mod component;
+mod gui;
 pub mod listings;
 pub mod providers;
 
 type Providers = Arc<Mutex<Vec<Box<dyn Provider>>>>;
 type Listings = Vec<Box<dyn Listing>>;
 
-#[derive(Debug, Clone)]
-pub enum Message {
-  OpenLayerShell,
-  CloseLayerShell,
-  Open,
-  ListingExecuted,
-  SearchQueryChanged(String),
-  SelectNextListing,
-  SelectPrevListing,
-  RunSelected,
-  ListingClicked(usize),
-  FocusInput,
-  UpdatedListings(Listings),
-  CalculatorResult(Option<String>),
-}
-
-impl TryInto<ShellAction> for Message {
+impl TryInto<LayerShellCustomActionWithId> for Message {
   type Error = Self;
 
-  fn try_into(self) -> Result<ShellAction, Self::Error> {
-    match self {
-      Self::OpenLayerShell => Ok(ShellAction::Open(NewLayerShellSettings {
-        size: Some((1000, 600)),
-        anchor: Anchor::Top,
-        margin: Some((200, 0, 0, 0)),
-        ..Default::default()
-      })),
-
-      Self::CloseLayerShell => Ok(ShellAction::Close),
-
-      _ => Err(self),
-    }
+  fn try_into(self) -> Result<LayerShellCustomActionWithId, Self::Error> {
+    Err(self)
   }
 }
 
-#[derive(Default)]
-pub struct Launcher {
-  calculator: Calculator,
-  calculator_result: Option<String>,
-
+pub struct LauncherApplication {
   providers: Providers,
   listings: Listings,
-  filtered_listings: Vec<usize>,
-  query: String,
-  selected_idx: usize,
+
+  request_channel: RequestChannel<Request>,
+  message_tx: Option<mpsc::Sender<Message>>,
 }
 
-impl Launcher {
-  pub fn new() -> Self {
-    Self {
-      calculator: Default::default(),
-      calculator_result: None,
+#[async_trait]
+impl N16Application for LauncherApplication {
+  type Request = Request;
 
+  async fn run(request_channel: RequestChannel<Self::Request>) {
+    let mut this = Self::new(request_channel);
+    this
+      .add_provider(providers::ApplicationProvider::new())
+      .await;
+    this
+      .add_provider(providers::PowerManagementProvider::new())
+      .await;
+
+    this.run().await;
+  }
+}
+
+impl LauncherApplication {
+  fn new(request_channel: RequestChannel<Request>) -> Self {
+    Self {
       providers: Default::default(),
       listings: Vec::new(),
-      filtered_listings: Vec::new(),
-      query: String::new(),
-      selected_idx: 0,
+      request_channel,
+      message_tx: None,
     }
   }
 
-  pub fn add_provider<P: Provider + 'static>(&mut self, provider: P) {
-    let mut providers = self.providers.blocking_lock();
-    providers.push(Box::new(provider));
+  async fn run(&mut self) {
+    self.update_listings().await;
+    self.open_launcher();
   }
 
-  pub async fn add_provider_async<P: Provider + 'static>(&mut self, provider: P) {
+  fn open_launcher(&mut self) -> IcedThread<Result<(), iced_layershell::Error>> {
+    let listings = self.listings.clone();
+
+    let (iced_thread, message_tx) = IcedThread::start(move |message_stream| {
+      iced_layershell::application(
+        move || {
+          (
+            Launcher::new(listings.clone()),
+            Task::batch([
+              message_stream.reciever().map_or(Task::none(), Task::stream),
+              Task::done(Message::FocusInput),
+            ]),
+          )
+        },
+        "n16_launcher",
+        Launcher::update,
+        Launcher::view,
+      )
+      .layer_settings(LayerShellSettings {
+        size: Some((1000, 600)),
+        anchor: Anchor::Top,
+        margin: (200, 0, 0, 0),
+        ..Default::default()
+      })
+      .subscription(Launcher::subscription)
+      .run()
+    });
+
+    self.message_tx = Some(message_tx);
+    iced_thread
+  }
+
+  async fn add_provider<P: Provider + 'static>(&mut self, provider: P) {
     let mut providers = self.providers.lock().await;
     providers.push(Box::new(provider));
   }
 
-  fn scroll_to_selected(&self) -> Task<Message> {
-    Task::none()
-  }
-
-  async fn update_listings(providers: Providers) -> Listings {
-    let mut providers = providers.lock().await;
+  async fn update_listings(&mut self) -> Listings {
+    let mut providers = self.providers.lock().await;
 
     let listings = providers
       .iter_mut()
@@ -110,197 +115,5 @@ impl Launcher {
       .flatten();
 
     listings.collect()
-  }
-
-  fn filter_listings(&mut self) {
-    self.filtered_listings.clear();
-    self.filtered_listings.extend(
-      self
-        .listings
-        .iter()
-        .enumerate()
-        .filter(|(_idx, listing)| search::filter_listing(listing.as_ref(), &self.query))
-        .map(|(idx, _listing)| idx),
-    );
-  }
-
-  fn update_query(&mut self, new_query: &str) -> Task<Message> {
-    self.query.clear();
-    self.query.push_str(new_query);
-    self.selected_idx = 0;
-    self.filter_listings();
-
-    Task::done(self.calculator.calculate_preview(&self.query)).map(Message::CalculatorResult)
-  }
-}
-
-impl ShellApplication for Launcher {
-  type Message = Message;
-
-  fn update(&mut self, message: Message) -> Task<Message> {
-    match message {
-      Message::Open => Task::batch([
-        self.update_query(""),
-        Task::future(async {
-          tokio::time::sleep(Duration::from_millis(250)).await;
-          Message::FocusInput
-        }),
-        Task::perform(
-          Self::update_listings(self.providers.clone()),
-          Message::UpdatedListings,
-        ),
-      ]),
-
-      Message::RunSelected => {
-        if let Some(listing_idx) = self.filtered_listings.get(self.selected_idx) {
-          self.listings[*listing_idx].execute()
-        } else {
-          Task::none()
-        }
-      }
-
-      Message::ListingClicked(idx) => self.listings[idx].execute(),
-
-      Message::ListingExecuted => Task::done(Message::CloseLayerShell),
-
-      Message::SearchQueryChanged(new_query) => self.update_query(&new_query),
-
-      Message::SelectNextListing => {
-        if self.filtered_listings.is_empty()
-          || self.selected_idx >= self.filtered_listings.len() - 1
-        {
-          self.selected_idx = 0;
-        } else {
-          self.selected_idx += 1;
-        }
-
-        self.scroll_to_selected()
-      }
-
-      Message::SelectPrevListing => {
-        if self.filtered_listings.is_empty() {
-          self.selected_idx = 0;
-        } else if self.selected_idx == 0 {
-          self.selected_idx = self.filtered_listings.len() - 1;
-        } else {
-          self.selected_idx -= 1;
-        }
-
-        self.scroll_to_selected()
-      }
-
-      Message::FocusInput => operation::focus(SEARCH_INPUT_ID),
-
-      Message::UpdatedListings(new_listings) => {
-        let _ = mem::replace(&mut self.listings, new_listings);
-        self.filter_listings();
-
-        Task::none()
-      }
-
-      Message::CalculatorResult(result) => {
-        self.calculator_result = result;
-        Task::none()
-      }
-
-      _ => Task::none(),
-    }
-  }
-
-  fn view(&self) -> Element<'_, Message, Base16Theme> {
-    let mut listings = scrolled_column![]
-      .height(Length::Fill)
-      .view_child(self.selected_idx);
-
-    for (filtered_idx, listing_idx) in self.filtered_listings.iter().enumerate() {
-      let selected = filtered_idx == self.selected_idx;
-      listings = listings.push(listing::view(
-        self.listings[*listing_idx].as_ref(),
-        selected,
-        Message::ListingClicked(*listing_idx),
-      ));
-    }
-
-    let mut column = column![search::view(&self.query).into()];
-
-    if let Some(result) = &self.calculator_result {
-      column = column.push(
-        column![
-          rule::horizontal(1).style(|theme: &Base16Theme| n16_theme::rule::colored(theme.base02))
-        ]
-        .height(20),
-      );
-      column = column.push(text(result));
-    }
-
-    column = column.push(
-      column![
-        rule::horizontal(1).style(|theme: &Base16Theme| n16_theme::rule::colored(theme.base02))
-      ]
-      .height(20),
-    );
-    column = column.push(listings);
-
-    let inner = container(column)
-      .height(Length::Fill)
-      .padding(8)
-      .style(|theme| container::Style {
-        background: Some(theme.base00.into()),
-        ..Default::default()
-      });
-
-    container(inner)
-      .padding(4)
-      .style(|theme| {
-        let gradient = gradient::Linear::new(50)
-          .add_stop(0.0, theme.base0D)
-          .add_stop(1.0, theme.base0E);
-
-        container::Style {
-          background: Some(gradient.into()),
-          ..Default::default()
-        }
-      })
-      .into()
-  }
-
-  fn subscription(&self) -> Subscription<Message> {
-    iced::event::listen_with(|event, _status, _window| match event {
-      iced::Event::Window(iced::window::Event::Unfocused) => Some(Message::CloseLayerShell),
-      iced::Event::Keyboard(iced::keyboard::Event::KeyPressed { key, .. }) => match key {
-        iced::keyboard::Key::Named(key::Named::ArrowUp) => Some(Message::SelectPrevListing),
-        iced::keyboard::Key::Named(key::Named::ArrowDown) => Some(Message::SelectNextListing),
-        iced::keyboard::Key::Named(key::Named::Enter) => Some(Message::RunSelected),
-        iced::keyboard::Key::Named(key::Named::Escape) => Some(Message::CloseLayerShell),
-        _ => None,
-      },
-      _ => None,
-    })
-  }
-}
-
-impl RequestHandler for Launcher {
-  type Request = launcher::Request;
-  type Message = Message;
-
-  fn handle_request(
-    &mut self,
-    request: Self::Request,
-    reply_channel: iced::futures::channel::oneshot::Sender<n16_ipc::Reply>,
-  ) -> Task<Self::Message> {
-    match request {
-      Request::Open => {
-        let _ = reply_channel.send(Response::handled().reply_ok());
-
-        Task::batch([
-          Task::done(Message::OpenLayerShell),
-          Task::done(Message::Open),
-        ])
-      }
-      Request::Close => {
-        let _ = reply_channel.send(Response::handled().reply_ok());
-        Task::done(Message::CloseLayerShell)
-      }
-    }
   }
 }

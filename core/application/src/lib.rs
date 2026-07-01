@@ -1,10 +1,18 @@
 use std::fmt::Debug;
 
-pub mod ipc;
-pub mod multi_window;
-pub mod single_window;
-mod subscription;
-
+use async_trait::async_trait;
+use iced_futures::futures::channel::{mpsc, oneshot};
 pub trait ShellMessage: Debug + Send + 'static {}
-
 impl<T: Debug + Send + 'static> ShellMessage for T {}
+
+pub type ApplicationRequest<R> = (R, oneshot::Sender<n16_ipc::Reply>);
+pub type RequestChannel<R> = mpsc::Receiver<ApplicationRequest<R>>;
+
+pub mod thread;
+
+#[async_trait]
+pub trait N16Application {
+  type Request: TryFrom<n16_ipc::Request>;
+
+  async fn run(request_channel: RequestChannel<Self::Request>);
+}

@@ -1,110 +1,72 @@
-use component::clock;
-use iced::widget::{Space, row};
-use iced::{Length, Subscription, Task, time};
-use iced_layershell::reexport::{Anchor, KeyboardInteractivity, NewLayerShellSettings};
+use async_trait::async_trait;
+use iced::{Task, futures::channel::mpsc};
 
-use n16_application::{
-  ipc::RequestHandler,
-  single_window::{ShellAction, ShellApplication},
+use iced_layershell::{
+  Settings,
+  settings::{LayerShellSettings, StartMode},
 };
-use n16_ipc::bar::{self, Request, Response};
+use n16_application::{N16Application, RequestChannel, thread::IcedThread};
+use n16_ipc::bar::{Request, Response};
 
-mod component;
+use crate::bar::{Bar, Message};
 
-#[derive(Debug, Clone)]
-pub enum Message {
-  Tick(chrono::DateTime<chrono::Local>),
-  Hide,
-  Show,
+mod bar;
+
+pub struct BarApplication {
+  request_channel: RequestChannel<Request>,
+  message_tx: mpsc::Sender<Message>,
 }
 
-impl TryInto<ShellAction> for Message {
-  type Error = Self;
+#[async_trait]
+impl N16Application for BarApplication {
+  type Request = Request;
 
-  fn try_into(self) -> Result<ShellAction, Self::Error> {
-    match self {
-      Self::Show => Ok(ShellAction::Open(NewLayerShellSettings {
-        size: Some((0, 30)),
-        anchor: Anchor::Bottom | Anchor::Left | Anchor::Right,
-        keyboard_interactivity: KeyboardInteractivity::None,
-        exclusive_zone: Some(30),
+  async fn run(request_channel: RequestChannel<Self::Request>) {
+    Self::new(request_channel).run().await;
+  }
+}
+
+impl BarApplication {
+  fn new(request_channel: RequestChannel<Request>) -> Self {
+    let (_iced_thread, message_tx) = IcedThread::start(|message_stream| {
+      iced_layershell::daemon(
+        move || {
+          (
+            Bar::new(),
+            message_stream.reciever().map_or(Task::none(), Task::stream),
+          )
+        },
+        "n16_bar",
+        Bar::update,
+        Bar::view,
+      )
+      .subscription(Bar::subscription)
+      .layer_settings(LayerShellSettings {
+        start_mode: StartMode::Background,
         ..Default::default()
-      })),
+      })
+      .run()
+    });
 
-      Self::Hide => Ok(ShellAction::Close),
-
-      _ => Err(self),
-    }
-  }
-}
-
-pub struct Bar {
-  now: chrono::DateTime<chrono::Local>,
-}
-
-impl Bar {
-  pub fn new() -> Self {
-    Self::default()
-  }
-}
-
-impl ShellApplication for Bar {
-  type Message = Message;
-
-  fn update(&mut self, message: Self::Message) -> iced::Task<Self::Message> {
-    match message {
-      Message::Tick(time) => {
-        self.now = time;
-        Task::none()
-      }
-
-      _ => Task::none(),
-    }
-  }
-
-  fn view(&self) -> iced::Element<'_, Self::Message, n16_theme::Base16Theme> {
-    row![
-      Space::new().width(Length::Fill),
-      clock::view(self.now).into()
-    ]
-    .padding(5)
-    .into()
-  }
-
-  fn subscription(&self) -> Subscription<Message> {
-    time::every(time::Duration::from_millis(500))
-      .map(|_| Message::Tick(chrono::offset::Local::now()))
-  }
-}
-
-impl RequestHandler for Bar {
-  type Request = bar::Request;
-
-  type Message = Message;
-
-  fn handle_request(
-    &mut self,
-    request: Self::Request,
-    reply_channel: iced::futures::channel::oneshot::Sender<n16_ipc::Reply>,
-  ) -> Task<Self::Message> {
-    match request {
-      Request::Show => {
-        let _ = reply_channel.send(Response::handled().reply_ok());
-        Task::done(Message::Show)
-      }
-
-      Request::Hide => {
-        let _ = reply_channel.send(Response::handled().reply_ok());
-        Task::done(Message::Hide)
-      }
-    }
-  }
-}
-
-impl Default for Bar {
-  fn default() -> Self {
     Self {
-      now: chrono::offset::Local::now(),
+      request_channel,
+      message_tx,
+    }
+  }
+
+  async fn run(&mut self) {
+    while let Ok((request, reply_channel)) = self.request_channel.recv().await {
+      let _ = self.message_tx.try_send(match request {
+        Request::Show => {
+          let _ = reply_channel.send(Response::handled().reply_ok());
+          Message::ShowBar(true)
+        }
+
+        Request::Hide => {
+          let _ = reply_channel.send(Response::handled().reply_ok());
+          Message::ShowBar(false)
+        }
+      });
     }
   }
 }

@@ -2631,17 +2631,16 @@ checksum = "13d2233c9842d08cfe13f9eac96e207ca6a2ea10b80259ebe8ad0268be27d2af"
 name = "n16-application"
 version = "0.1.1"
 dependencies = [
- "iced",
+ "async-trait",
  "iced_futures",
- "iced_layershell",
  "n16-ipc",
- "n16-theme",
 ]
 
 [[package]]
 name = "n16-bar"
 version = "0.1.1"
 dependencies = [
+ "async-trait",
  "chrono",
  "iced",
  "iced_layershell",
@@ -2675,6 +2674,7 @@ dependencies = [
 name = "n16-daemon"
 version = "0.1.1"
 dependencies = [
+ "async-trait",
  "iced",
  "iced_layershell",
  "n16-application",
@@ -2702,6 +2702,7 @@ dependencies = [
 name = "n16-launcher"
 version = "0.1.1"
 dependencies = [
+ "async-trait",
  "dyn-clone",
  "fend-core",
  "freedesktop-desktop-entry",
@@ -4551,7 +4552,19 @@ dependencies = [
  "mio",
  "pin-project-lite",
  "socket2",
+ "tokio-macros",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "2.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "385a6cb71ab9ab790c5fe8d67f1645e6c450a7ce006a33de03daa956cf70a496"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
