@@ -1,13 +1,13 @@
 use std::ops::ControlFlow;
 
 use iced::{Element, Subscription, Task, window};
-use iced_layershell::actions::LayershellCustomActionWithId;
+use iced_layershell::actions::LayerShellCustomActionWithId;
 use n16_theme::Base16Theme;
 
 use crate::{ShellMessage, ipc::RequestHandler, subscription};
 
 pub trait ShellApplication {
-  type Message: ShellMessage + TryInto<LayershellCustomActionWithId, Error = Self::Message>;
+  type Message: ShellMessage + TryInto<LayerShellCustomActionWithId, Error = Self::Message>;
 
   fn update(&mut self, message: Self::Message) -> Task<Self::Message>;
 
@@ -18,13 +18,13 @@ pub trait ShellApplication {
   }
 }
 
-pub struct MultiApplicationManager<A: ShellApplication, M: From<LayershellCustomActionWithId>> {
+pub struct MultiApplicationManager<A: ShellApplication, M: From<LayerShellCustomActionWithId>> {
   application: A,
   windows: Vec<window::Id>,
   map_fn: fn(A::Message) -> M,
 }
 
-impl<A: ShellApplication, M: From<LayershellCustomActionWithId>> MultiApplicationManager<A, M> {
+impl<A: ShellApplication, M: From<LayerShellCustomActionWithId>> MultiApplicationManager<A, M> {
   pub fn new(application: A, map_fn: fn(A::Message) -> M) -> Self {
     Self {
       application,
@@ -75,7 +75,7 @@ impl<A, M> RequestHandler for MultiApplicationManager<A, M>
 where
   A: ShellApplication,
   A: RequestHandler<Message = <A as ShellApplication>::Message>,
-  M: ShellMessage + From<LayershellCustomActionWithId>,
+  M: ShellMessage + From<LayerShellCustomActionWithId>,
 {
   type Request = A::Request;
   type Message = <A as RequestHandler>::Message;

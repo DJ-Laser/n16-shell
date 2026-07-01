@@ -42,7 +42,7 @@ impl Calculator {
 
     let res = calculator_fn(input)?;
 
-    if res.is_unit_type() {
+    if res.output_is_empty() {
       return None;
     }
 
@@ -53,7 +53,7 @@ impl Calculator {
     Self::calculate_inner(input, |input| {
       Some(fend_core::evaluate_preview_with_interrupt(
         input,
-        &mut self.context.clone(),
+        &self.context,
         &NoInterrupt,
       ))
     })

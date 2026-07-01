@@ -3,7 +3,7 @@ use std::ops::ControlFlow;
 use iced::{Element, Subscription, Task, window};
 use iced_futures::MaybeSend;
 use iced_layershell::{
-  actions::{LayershellCustomAction, LayershellCustomActionWithId},
+  actions::{LayerShellCustomAction, LayerShellCustomActionWithId},
   reexport::NewLayerShellSettings,
 };
 
@@ -13,7 +13,7 @@ use crate::{ShellMessage, ipc::RequestHandler, subscription};
 
 pub enum ShellAction {
   Open(NewLayerShellSettings),
-  LayershellAction(LayershellCustomAction),
+  LayershellAction(LayerShellCustomAction),
   Close,
 }
 
@@ -29,7 +29,7 @@ pub trait ShellApplication {
   }
 }
 
-pub struct SingleApplicationManager<A: ShellApplication, M: From<LayershellCustomActionWithId>> {
+pub struct SingleApplicationManager<A: ShellApplication, M: From<LayerShellCustomActionWithId>> {
   application: A,
   window: Option<window::Id>,
   map_fn: fn(A::Message) -> M,
@@ -38,7 +38,7 @@ pub struct SingleApplicationManager<A: ShellApplication, M: From<LayershellCusto
 impl<A, M> SingleApplicationManager<A, M>
 where
   A: ShellApplication,
-  M: From<LayershellCustomActionWithId>,
+  M: From<LayerShellCustomActionWithId>,
 {
   pub fn new(application: A, map_fn: fn(A::Message) -> M) -> Self {
     Self {
@@ -48,7 +48,7 @@ where
     }
   }
 
-  fn map_action(&mut self, action: ShellAction) -> Option<LayershellCustomActionWithId> {
+  fn map_action(&mut self, action: ShellAction) -> Option<LayerShellCustomActionWithId> {
     match action {
       ShellAction::Open(settings) => {
         if self.window.is_none() {
@@ -57,9 +57,9 @@ where
 
           println!("Opened window {}", new_window);
 
-          Some(LayershellCustomActionWithId::new(
+          Some(LayerShellCustomActionWithId::new(
             None,
-            LayershellCustomAction::NewLayerShell {
+            LayerShellCustomAction::NewLayerShell {
               id: new_window,
               settings,
             },
@@ -70,11 +70,11 @@ where
       }
 
       ShellAction::LayershellAction(action) => {
-        Some(LayershellCustomActionWithId::new(self.window, action))
+        Some(LayerShellCustomActionWithId::new(self.window, action))
       }
 
       ShellAction::Close => self.window.map(|window| {
-        LayershellCustomActionWithId::new(Some(window), LayershellCustomAction::RemoveWindow)
+        LayerShellCustomActionWithId::new(Some(window), LayerShellCustomAction::RemoveWindow)
       }),
     }
   }
@@ -90,7 +90,7 @@ where
 
   pub fn update(&mut self, message: A::Message) -> Task<M>
   where
-    M: From<LayershellCustomActionWithId> + MaybeSend + 'static,
+    M: From<LayerShellCustomActionWithId> + MaybeSend + 'static,
     <A as ShellApplication>::Message: 'static,
   {
     let message = match message.try_into() {
@@ -132,7 +132,7 @@ impl<A, M> RequestHandler for SingleApplicationManager<A, M>
 where
   A: ShellApplication,
   A: RequestHandler<Message = <A as ShellApplication>::Message>,
-  M: ShellMessage + From<LayershellCustomActionWithId>,
+  M: ShellMessage + From<LayerShellCustomActionWithId>,
 {
   type Request = A::Request;
   type Message = M;

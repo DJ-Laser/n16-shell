@@ -31,7 +31,7 @@ pub fn load_config_file() -> Option<Config> {
 
   let text = fs::read_to_string(config_path).ok()?;
 
-  let config: Result<Config, _> = knuffel::parse("config.kdl", &text);
+  let config: Result<Config, _> = knus::parse("config.kdl", &text);
 
   match config {
     Ok(config) => Some(config),

@@ -15,7 +15,11 @@ mod listing;
 
 pub fn get_data_dirs(env: &BaseDirectories) -> Vec<PathBuf> {
   let mut data_dirs: Vec<PathBuf> = vec![];
-  data_dirs.push(env.get_data_home());
+
+  if let Some(data_home) = env.get_data_home() {
+    data_dirs.push(data_home);
+  }
+
   data_dirs.append(&mut env.get_data_dirs());
 
   data_dirs
@@ -35,7 +39,7 @@ impl ApplicationProvider {
   }
 
   fn update_data(&mut self) {
-    self.data_dirs = get_data_dirs(&BaseDirectories::new().unwrap());
+    self.data_dirs = get_data_dirs(&BaseDirectories::new());
     self.icon_themes = get_icon_themes(&self.data_dirs);
     self.locales = desktop::get_languages_from_env();
   }

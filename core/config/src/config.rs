@@ -1,8 +1,8 @@
 use n16_theme::Base16Theme;
 
-#[derive(Debug, Clone, Default, knuffel::Decode)]
+#[derive(Debug, Clone, Default, knus::Decode)]
 pub struct Config {
-  #[knuffel(child)]
+  #[knus(child)]
   theme: Base16Theme,
 }
 

@@ -1,26 +1,26 @@
 use iced::futures::channel::oneshot;
-use iced_layershell::actions::LayershellCustomActionWithId;
+use iced_layershell::actions::LayerShellCustomActionWithId;
 use n16_ipc::Reply;
 
 #[derive(Debug)]
 pub enum Message {
   Launcher(n16_launcher::Message),
   Bar(n16_bar::Message),
-  LayershellAction(LayershellCustomActionWithId),
+  LayershellAction(LayerShellCustomActionWithId),
   Request(n16_ipc::Request, oneshot::Sender<Reply>),
   WindowClose(iced::window::Id),
 }
 
-impl From<LayershellCustomActionWithId> for Message {
-  fn from(value: LayershellCustomActionWithId) -> Self {
+impl From<LayerShellCustomActionWithId> for Message {
+  fn from(value: LayerShellCustomActionWithId) -> Self {
     Self::LayershellAction(value)
   }
 }
 
-impl TryInto<LayershellCustomActionWithId> for Message {
+impl TryInto<LayerShellCustomActionWithId> for Message {
   type Error = Self;
 
-  fn try_into(self) -> Result<LayershellCustomActionWithId, Self::Error> {
+  fn try_into(self) -> Result<LayerShellCustomActionWithId, Self::Error> {
     match self {
       Self::LayershellAction(action) => Ok(action),
       _ => Err(self),

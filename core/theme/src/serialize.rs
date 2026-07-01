@@ -7,76 +7,75 @@ use crate::Base16Theme;
 #[derive(Debug, Clone)]
 struct HexColor(Color);
 
-impl<S> knuffel::DecodeScalar<S> for HexColor
+impl<S> knus::DecodeScalar<S> for HexColor
 where
-  S: knuffel::traits::ErrorSpan,
+  S: knus::traits::ErrorSpan,
 {
   fn type_check(
-    type_name: &Option<knuffel::span::Spanned<knuffel::ast::TypeName, S>>,
-    ctx: &mut knuffel::decode::Context<S>,
+    type_name: &Option<knus::span::Spanned<knus::ast::TypeName, S>>,
+    ctx: &mut knus::decode::Context<S>,
   ) {
     if let Some(typ) = type_name {
-      ctx.emit_error(knuffel::errors::DecodeError::TypeName {
+      ctx.emit_error(knus::errors::DecodeError::TypeName {
         span: typ.span().clone(),
         found: Some((**typ).clone()),
-        expected: knuffel::errors::ExpectedType::no_type(),
+        expected: knus::errors::ExpectedType::no_type(),
         rust_type: stringify!(HexColor),
       });
     }
   }
 
   fn raw_decode(
-    value: &knuffel::span::Spanned<knuffel::ast::Literal, S>,
-    _ctx: &mut knuffel::decode::Context<S>,
-  ) -> Result<Self, knuffel::errors::DecodeError<S>> {
+    value: &knus::span::Spanned<knus::ast::Literal, S>,
+    _ctx: &mut knus::decode::Context<S>,
+  ) -> Result<Self, knus::errors::DecodeError<S>> {
     match &**value {
-      knuffel::ast::Literal::String(s) => {
-        let color = Color::from_str(s).map_err(|_| {
-          knuffel::errors::DecodeError::conversion(value, "expected a valid hex string")
-        });
+      knus::ast::Literal::String(s) => {
+        let color = Color::from_str(s)
+          .map_err(|_| knus::errors::DecodeError::conversion(value, "expected a valid hex string"));
         color.map(Self)
       }
-      _ => Err(::knuffel::errors::DecodeError::scalar_kind(
-        ::knuffel::decode::Kind::String,
+      _ => Err(::knus::errors::DecodeError::scalar_kind(
+        ::knus::decode::Kind::String,
         value,
       )),
     }
   }
 }
 
-#[derive(Debug, Clone, knuffel::Decode)]
+#[derive(Debug, Clone, knus::Decode)]
 struct Base16Repr {
-  #[knuffel(child, unwrap(argument))]
+  #[knus(child, unwrap(argument))]
   pub base00: HexColor,
-  #[knuffel(child, unwrap(argument))]
+  #[knus(child, unwrap(argument))]
   pub base01: HexColor,
-  #[knuffel(child, unwrap(argument))]
+  #[knus(child, unwrap(argument))]
   pub base02: HexColor,
-  #[knuffel(child, unwrap(argument))]
+  #[knus(child, unwrap(argument))]
   pub base03: HexColor,
-  #[knuffel(child, unwrap(argument))]
+  #[knus(child, unwrap(argument))]
   pub base04: HexColor,
-  #[knuffel(child, unwrap(argument))]
+  #[knus(child, unwrap(argument))]
   pub base05: HexColor,
-  #[knuffel(child, unwrap(argument))]
+  #[knus(child, unwrap(argument))]
   pub base06: HexColor,
-  #[knuffel(child, unwrap(argument))]
+  #[knus(child, unwrap(argument))]
   pub base07: HexColor,
-  #[knuffel(child, unwrap(argument))]
+  #[knus(child, unwrap(argument))]
   pub base08: HexColor,
-  #[knuffel(child, unwrap(argument))]
+  #[knus(child, unwrap(argument))]
   pub base09: HexColor,
-  #[knuffel(child, unwrap(argument))]
+  #[knus(child, unwrap(argument))]
   pub base0a: HexColor,
-  #[knuffel(child, unwrap(argument))]
+  #[knus(child, unwrap(argument))]
   pub base0b: HexColor,
-  #[knuffel(child, unwrap(argument))]
+  #[knus(child, unwrap(argument))]
   pub base0c: HexColor,
-  #[knuffel(child, unwrap(argument))]
+  #[knus(child, unwrap(argument))]
   pub base0d: HexColor,
-  #[knuffel(child, unwrap(argument))]
+  #[knus(child, unwrap(argument))]
   pub base0e: HexColor,
-  #[knuffel(child, unwrap(argument))]
+  #[knus(child, unwrap(argument))]
   pub base0f: HexColor,
 }
 
@@ -103,14 +102,14 @@ impl From<Base16Repr> for Base16Theme {
   }
 }
 
-impl<S> knuffel::Decode<S> for Base16Theme
+impl<S> knus::Decode<S> for Base16Theme
 where
-  S: knuffel::traits::ErrorSpan,
+  S: knus::traits::ErrorSpan,
 {
   fn decode_node(
-    node: &knuffel::ast::SpannedNode<S>,
-    ctx: &mut knuffel::decode::Context<S>,
-  ) -> Result<Self, knuffel::errors::DecodeError<S>> {
+    node: &knus::ast::SpannedNode<S>,
+    ctx: &mut knus::decode::Context<S>,
+  ) -> Result<Self, knus::errors::DecodeError<S>> {
     Ok(Base16Repr::decode_node(node, ctx)?.into())
   }
 }
