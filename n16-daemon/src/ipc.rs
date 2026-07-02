@@ -1,6 +1,7 @@
 use std::io;
 use std::path::Path;
 
+use n16_core::application::ApplicationRequest;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{UnixListener, UnixStream};
 
@@ -9,9 +10,9 @@ use futures_lite::{Stream, StreamExt};
 use n16_ipc::{Reply, Request};
 use tokio_stream::wrappers::UnixListenerStream;
 
-type Output = async_channel::Sender<(Request, async_oneshot::Sender<Reply>)>;
+type RequestSender = async_channel::Sender<ApplicationRequest<Request>>;
 
-pub fn run_ipc_server() -> impl Stream<Item = (Request, async_oneshot::Sender<Reply>)> {
+pub fn run_ipc_server() -> impl Stream<Item = ApplicationRequest<Request>> {
   let (output, reciever) = async_channel::unbounded();
 
   tokio::spawn(async move {
@@ -45,7 +46,7 @@ pub fn run_ipc_server() -> impl Stream<Item = (Request, async_oneshot::Sender<Re
   reciever
 }
 
-async fn handle_stream(mut stream: UnixStream, output: &mut Output) -> io::Result<()> {
+async fn handle_stream(mut stream: UnixStream, output: &mut RequestSender) -> io::Result<()> {
   let (read, mut write) = stream.split();
   let mut buf = String::new();
 
@@ -67,10 +68,10 @@ async fn handle_stream(mut stream: UnixStream, output: &mut Output) -> io::Resul
   Ok(())
 }
 
-async fn process_request(request: Request, output: &mut Output) -> Option<Reply> {
-  let (sender, reciever) = async_oneshot::oneshot();
-  output.send((request, sender)).await.ok()?;
+async fn process_request(request: Request, output: &mut RequestSender) -> Option<Reply> {
+  let (request, reply_rx) = ApplicationRequest::new(request);
+  output.send(request).await.ok()?;
 
-  let reply = reciever.await.ok()?;
+  let reply = reply_rx.recv().await.ok()?;
   Some(reply)
 }

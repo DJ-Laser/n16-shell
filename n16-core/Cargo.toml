@@ -9,9 +9,7 @@ n16-ipc.workspace = true
 iced.workspace = true
 iced_layershell.workspace = true
 
-async-trait.workspace = true
 async-channel.workspace = true
-async-oneshot.workspace = true
 
 knus.workspace = true
 miette = { version="7.6.0", features=["fancy"] }

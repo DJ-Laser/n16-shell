@@ -299,15 +299,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-oneshot"
-version = "0.5.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae47de2a02d543205f3f5457a90b6ecbc9494db70557bd29590ec8f1ddff5463"
-dependencies = [
- "futures-micro",
-]
-
-[[package]]
 name = "async-process"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1444,15 +1435,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "futures-micro"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b460264b3593d68b16a7bc35f7bc226ddfebdf9a1c8db1ed95d5cc6b7168c826"
-dependencies = [
- "pin-project-lite",
 ]
 
 [[package]]
@@ -2650,7 +2632,6 @@ name = "n16-bar"
 version = "0.1.1"
 dependencies = [
  "async-channel",
- "async-trait",
  "chrono",
  "iced",
  "iced_layershell",
@@ -2674,8 +2655,6 @@ name = "n16-core"
 version = "0.1.1"
 dependencies = [
  "async-channel",
- "async-oneshot",
- "async-trait",
  "iced",
  "iced_layershell",
  "knus",
@@ -2688,7 +2667,6 @@ name = "n16-daemon"
 version = "0.1.1"
 dependencies = [
  "async-channel",
- "async-oneshot",
  "futures-lite",
  "iced",
  "iced_layershell",
@@ -2716,8 +2694,6 @@ name = "n16-launcher"
 version = "0.1.1"
 dependencies = [
  "async-channel",
- "async-oneshot",
- "async-trait",
  "dyn-clone",
  "fend-core",
  "freedesktop-desktop-entry",

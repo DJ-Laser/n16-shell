@@ -59,3 +59,9 @@ impl Response {
 /// * If the request does not need any particular response, it will be
 ///   `Reply::Ok(Response::Handled)`. Kind of like an `Ok(())`.
 pub type Reply = Result<Response, String>;
+
+impl From<Response> for Reply {
+  fn from(value: Response) -> Self {
+    value.reply_ok()
+  }
+}

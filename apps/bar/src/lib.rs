@@ -1,64 +1,142 @@
-use async_trait::async_trait;
-use iced::Task;
+use iced::{
+  Length, Subscription, Task, time,
+  widget::{Space, row},
+  window,
+};
+use iced_layershell::{
+  reexport::{Anchor, KeyboardInteractivity, NewLayerShellSettings},
+  settings::{LayerShellSettings, StartMode},
+  to_layer_message,
+};
+use n16_core::{
+  application::{ApplicationRequest, N16Application, RequestChannel},
+  theme::{self},
+};
+use n16_ipc::{Response, bar::Request};
 
-use iced_layershell::settings::{LayerShellSettings, StartMode};
-use n16_core::application::{N16Application, RequestChannel, thread::IcedThread};
-use n16_ipc::bar::{Request, Response};
+use crate::components::clock;
 
-use crate::bar::{Bar, Message};
+mod components;
 
-mod bar;
-
-pub struct BarApplication {
-  request_channel: RequestChannel<Request>,
-  message_tx: async_channel::Sender<Message>,
+#[to_layer_message(multi)]
+#[derive(Debug, Clone)]
+pub enum Message {
+  Tick(chrono::DateTime<chrono::Local>),
+  ShowBar(bool),
+  RequestRecieved(ApplicationRequest<Request>),
 }
 
-#[async_trait]
-impl N16Application for BarApplication {
-  type Request = Request;
+pub struct Bar {
+  now: chrono::DateTime<chrono::Local>,
+  window_id: Option<window::Id>,
+}
 
-  async fn run(request_channel: RequestChannel<Self::Request>) {
-    Self::new(request_channel).run().await;
+impl Bar {
+  fn handle_request(&mut self, request: ApplicationRequest<Request>) -> Task<Message> {
+    match request.kind() {
+      Request::Show => {
+        request.reply(Response::Handled);
+        Task::done(Message::ShowBar(true))
+      }
+      Request::Hide => {
+        request.reply(Response::Handled);
+        Task::done(Message::ShowBar(false))
+      }
+    }
   }
-}
 
-impl BarApplication {
-  fn new(request_channel: RequestChannel<Request>) -> Self {
-    let (_iced_thread, message_tx) = IcedThread::start(|message_rx| {
-      iced_layershell::daemon(
-        move || (Bar::new(), Task::stream(message_rx.clone())),
-        "n16_bar",
-        Bar::update,
-        Bar::view,
-      )
-      .subscription(Bar::subscription)
-      .layer_settings(LayerShellSettings {
-        start_mode: StartMode::Background,
-        ..Default::default()
-      })
-      .run()
+  fn show_bar(&mut self) -> Task<Message> {
+    if self.window_id.is_some() {
+      return Task::none();
+    }
+
+    let (id, task) = Message::layershell_open(NewLayerShellSettings {
+      size: Some((0, 30)),
+      anchor: Anchor::Bottom | Anchor::Left | Anchor::Right,
+      keyboard_interactivity: KeyboardInteractivity::None,
+      exclusive_zone: Some(30),
+      ..Default::default()
     });
 
+    self.window_id = Some(id);
+    task
+  }
+
+  fn hide_bar(&mut self) -> Task<Message> {
+    let Some(window_id) = self.window_id else {
+      return Task::none();
+    };
+
+    self.window_id = None;
+    window::close(window_id)
+  }
+}
+
+impl Bar {
+  #[allow(clippy::new_without_default)]
+  pub fn new() -> Self {
     Self {
-      request_channel,
-      message_tx,
+      now: chrono::offset::Local::now(),
+      window_id: None,
     }
   }
 
-  async fn run(&mut self) {
-    while let Ok((request, mut reply_channel)) = self.request_channel.recv().await {
-      let _ = self.message_tx.try_send(match request {
-        Request::Show => {
-          let _ = reply_channel.send(Response::handled().reply_ok());
-          Message::ShowBar(true)
-        }
+  pub fn update(&mut self, message: Message) -> Task<Message> {
+    match message {
+      Message::Tick(time) => {
+        self.now = time;
+        Task::none()
+      }
 
-        Request::Hide => {
-          let _ = reply_channel.send(Response::handled().reply_ok());
-          Message::ShowBar(false)
+      Message::ShowBar(show) => {
+        if show {
+          self.show_bar()
+        } else {
+          self.hide_bar()
         }
-      });
+      }
+
+      Message::RequestRecieved(request) => self.handle_request(request),
+
+      _ => unreachable!(),
     }
+  }
+
+  pub fn view(&self, _id: window::Id) -> iced::Element<'_, Message, theme::Base16Theme> {
+    row![
+      Space::new().width(Length::Fill),
+      clock::view(self.now).into()
+    ]
+    .padding(5)
+    .into()
+  }
+
+  pub fn subscription(&self) -> Subscription<Message> {
+    time::every(time::Duration::from_millis(500))
+      .map(|_| Message::Tick(chrono::offset::Local::now()))
+  }
+}
+
+impl N16Application for Bar {
+  type Request = Request;
+
+  fn run(request_rx: RequestChannel<Self::Request>) {
+    let _ = iced_layershell::daemon(
+      move || {
+        (
+          Bar::new(),
+          Task::stream(request_rx.clone()).map(Message::RequestRecieved),
+        )
+      },
+      "n16_bar",
+      Bar::update,
+      Bar::view,
+    )
+    .subscription(Bar::subscription)
+    .layer_settings(LayerShellSettings {
+      start_mode: StartMode::Background,
+      ..Default::default()
+    })
+    .run();
   }
 }
