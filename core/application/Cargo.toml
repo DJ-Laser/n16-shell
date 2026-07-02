@@ -1,9 +1,0 @@
-[package]
-name = "n16-application"
-version.workspace = true
-edition.workspace = true
-
-[dependencies]
-iced_futures.workspace = true
-n16-ipc.workspace = true
-async-trait.workspace = true

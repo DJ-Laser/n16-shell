@@ -1,8 +1,7 @@
+use iced::Color;
 use std::str::FromStr;
 
-use iced::Color;
-
-use crate::Base16Theme;
+use crate::theme::Base16Theme;
 
 #[derive(Debug, Clone)]
 struct HexColor(Color);

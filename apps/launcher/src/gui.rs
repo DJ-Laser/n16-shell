@@ -6,10 +6,10 @@ use crate::component::search::SEARCH_INPUT_ID;
 use iced::keyboard::key;
 use iced::widget::{column, container, operation, rule, text};
 use iced::{Element, Length, Subscription, Task, gradient};
+use n16_core::scrolled_column;
 
 use crate::component::{listing, search};
-use n16_theme::Base16Theme;
-use n16_widget::scrolled_column;
+use n16_core::theme::{self, Base16Theme};
 
 pub struct Launcher {
   calculator: Calculator,
@@ -152,7 +152,7 @@ impl Launcher {
     if let Some(result) = &self.calculator_result {
       column = column.push(
         column![
-          rule::horizontal(1).style(|theme: &Base16Theme| n16_theme::rule::colored(theme.base02))
+          rule::horizontal(1).style(|theme: &Base16Theme| theme::rule::colored(theme.base02))
         ]
         .height(20),
       );
@@ -160,10 +160,8 @@ impl Launcher {
     }
 
     column = column.push(
-      column![
-        rule::horizontal(1).style(|theme: &Base16Theme| n16_theme::rule::colored(theme.base02))
-      ]
-      .height(20),
+      column![rule::horizontal(1).style(|theme: &Base16Theme| theme::rule::colored(theme.base02))]
+        .height(20),
     );
     column = column.push(listings);
 

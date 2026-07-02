@@ -1,11 +1,8 @@
 use async_trait::async_trait;
 use iced::{Task, futures::channel::mpsc};
 
-use iced_layershell::{
-  Settings,
-  settings::{LayerShellSettings, StartMode},
-};
-use n16_application::{N16Application, RequestChannel, thread::IcedThread};
+use iced_layershell::settings::{LayerShellSettings, StartMode};
+use n16_core::application::{N16Application, RequestChannel, thread::IcedThread};
 use n16_ipc::bar::{Request, Response};
 
 use crate::bar::{Bar, Message};

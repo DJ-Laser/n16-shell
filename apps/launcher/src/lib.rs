@@ -7,7 +7,7 @@ use iced_layershell::{
   actions::LayerShellCustomActionWithId, reexport::Anchor, settings::LayerShellSettings,
 };
 use listings::{Listing, Provider};
-use n16_application::{N16Application, RequestChannel, thread::IcedThread};
+use n16_core::application::{N16Application, RequestChannel, thread::IcedThread};
 use n16_ipc::{Response, launcher::Request};
 use std::sync::Arc;
 

@@ -1,8 +1,8 @@
 use std::{env, fs, path::PathBuf};
 
-pub use config::*;
+pub use base_config::*;
 
-mod config;
+mod base_config;
 
 pub fn find_config_file() -> Option<PathBuf> {
   let mut config_dir = {

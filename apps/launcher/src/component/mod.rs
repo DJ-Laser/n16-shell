@@ -1,5 +1,5 @@
 use iced::Element;
-use n16_theme::Base16Theme;
+use n16_core::theme::Base16Theme;
 
 pub mod listing;
 pub mod search;

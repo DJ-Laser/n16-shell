@@ -7,7 +7,7 @@ use iced_layershell::{
   reexport::{Anchor, KeyboardInteractivity, NewLayerShellSettings},
   to_layer_message,
 };
-use n16_theme::Base16Theme;
+use n16_core::theme::{self, Base16Theme};
 
 pub mod clock;
 
@@ -78,7 +78,7 @@ impl Bar {
     }
   }
 
-  pub fn view(&self, _id: window::Id) -> iced::Element<'_, Message, n16_theme::Base16Theme> {
+  pub fn view(&self, _id: window::Id) -> iced::Element<'_, Message, theme::Base16Theme> {
     row![
       Space::new().width(Length::Fill),
       clock::view(self.now).into()

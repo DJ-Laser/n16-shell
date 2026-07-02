@@ -1,7 +1,7 @@
 use iced::widget::scrollable::{AutoScroll, Catalog, Rail, Scroller, Status, Style, StyleFn};
 use iced::{Background, Color, Shadow, Vector, border};
 
-use crate::Base16Theme;
+use crate::theme::Base16Theme;
 
 impl Catalog for Base16Theme {
   type Class<'a> = StyleFn<'a, Self>;

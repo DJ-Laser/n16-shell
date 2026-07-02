@@ -2,8 +2,8 @@ use std::{marker::PhantomData, ops::ControlFlow, pin::pin, process};
 
 use async_trait::async_trait;
 use iced::futures::{SinkExt, StreamExt, channel::mpsc};
-use n16_application::{ApplicationRequest, N16Application};
 use n16_bar::BarApplication;
+use n16_core::application::{ApplicationRequest, N16Application};
 use n16_ipc::{Request, Response};
 use n16_launcher::LauncherApplication;
 

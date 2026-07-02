@@ -3,7 +3,7 @@ use std::{
   thread::{self},
 };
 
-use iced_futures::futures::channel::{mpsc, oneshot};
+use iced::futures::channel::{mpsc, oneshot};
 
 #[derive(Debug)]
 pub struct MessageStream<Message>(Arc<Mutex<Option<mpsc::Receiver<Message>>>>);

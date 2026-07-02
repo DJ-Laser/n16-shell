@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use async_trait::async_trait;
-use iced_futures::futures::channel::{mpsc, oneshot};
+use iced::futures::channel::{mpsc, oneshot};
 pub trait ShellMessage: Debug + Send + 'static {}
 impl<T: Debug + Send + 'static> ShellMessage for T {}
 

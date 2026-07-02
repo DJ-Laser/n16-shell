@@ -1,4 +1,4 @@
-use n16_theme::Base16Theme;
+use crate::theme::Base16Theme;
 
 #[derive(Debug, Clone, Default, knus::Decode)]
 pub struct Config {

@@ -1,10 +1,10 @@
 use iced::theme::{Base, Style};
 
-use crate::Base16Theme;
+use crate::theme::Base16Theme;
 
 impl Base for Base16Theme {
   fn default(_preference: iced::theme::Mode) -> Self {
-    crate::DEFAULT_THEME
+    crate::theme::DEFAULT_THEME
   }
 
   fn mode(&self) -> iced::theme::Mode {
