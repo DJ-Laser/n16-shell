@@ -12,6 +12,8 @@ iced_layershell.workspace = true
 
 tokio.workspace = true
 async-trait.workspace = true
+async-channel.workspace = true
+async-oneshot.workspace = true
 
 itertools.workspace = true
 

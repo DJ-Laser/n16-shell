@@ -4,21 +4,17 @@ use std::path::Path;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{UnixListener, UnixStream};
 
-use iced::futures;
+use futures_lite::{Stream, StreamExt};
 
-use futures::channel::mpsc;
-use futures::channel::oneshot;
-use futures::{Stream, StreamExt};
-
-use iced::futures::SinkExt;
-use iced::stream;
 use n16_ipc::{Reply, Request};
 use tokio_stream::wrappers::UnixListenerStream;
 
-type Output = mpsc::Sender<(Request, oneshot::Sender<Reply>)>;
+type Output = async_channel::Sender<(Request, async_oneshot::Sender<Reply>)>;
 
-pub fn run_ipc_server() -> impl Stream<Item = (Request, oneshot::Sender<Reply>)> {
-  stream::channel(100, async move |output| {
+pub fn run_ipc_server() -> impl Stream<Item = (Request, async_oneshot::Sender<Reply>)> {
+  let (output, reciever) = async_channel::unbounded();
+
+  tokio::spawn(async move {
     let socket_path = Path::new(n16_ipc::socket_path());
 
     if socket_path.exists() {
@@ -30,19 +26,23 @@ pub fn run_ipc_server() -> impl Stream<Item = (Request, oneshot::Sender<Reply>)>
     let listener = UnixListenerStream::new(listener);
 
     listener
-      .for_each_concurrent(3, async |stream| {
+      .for_each(|stream| {
         let Ok(stream) = stream else {
           return;
         };
 
         let mut output = output.clone();
 
-        if let Err(err) = handle_stream(stream, &mut output).await {
-          println!("Error creating stream: {:?}", err)
-        }
+        tokio::spawn(async move {
+          if let Err(err) = handle_stream(stream, &mut output).await {
+            println!("Error creating stream: {:?}", err)
+          }
+        });
       })
-      .await
-  })
+      .await;
+  });
+
+  reciever
 }
 
 async fn handle_stream(mut stream: UnixStream, output: &mut Output) -> io::Result<()> {
@@ -68,7 +68,7 @@ async fn handle_stream(mut stream: UnixStream, output: &mut Output) -> io::Resul
 }
 
 async fn process_request(request: Request, output: &mut Output) -> Option<Reply> {
-  let (sender, reciever) = oneshot::channel();
+  let (sender, reciever) = async_oneshot::oneshot();
   output.send((request, sender)).await.ok()?;
 
   let reply = reciever.await.ok()?;

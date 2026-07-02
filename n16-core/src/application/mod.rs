@@ -1,12 +1,11 @@
 use std::fmt::Debug;
 
 use async_trait::async_trait;
-use iced::futures::channel::{mpsc, oneshot};
 pub trait ShellMessage: Debug + Send + 'static {}
 impl<T: Debug + Send + 'static> ShellMessage for T {}
 
-pub type ApplicationRequest<R> = (R, oneshot::Sender<n16_ipc::Reply>);
-pub type RequestChannel<R> = mpsc::Receiver<ApplicationRequest<R>>;
+pub type ApplicationRequest<R> = (R, async_oneshot::Sender<n16_ipc::Reply>);
+pub type RequestChannel<R> = async_channel::Receiver<ApplicationRequest<R>>;
 
 pub mod thread;
 

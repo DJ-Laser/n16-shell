@@ -1,8 +1,5 @@
 use async_trait::async_trait;
-use iced::{
-  Task,
-  futures::{SinkExt, StreamExt, channel::mpsc},
-};
+use iced::Task;
 use iced_layershell::{
   actions::LayerShellCustomActionWithId, reexport::Anchor, settings::LayerShellSettings,
 };
@@ -10,7 +7,6 @@ use listings::{Listing, Provider};
 use n16_core::application::{N16Application, RequestChannel, thread::IcedThread};
 use n16_ipc::{Response, launcher::Request};
 use std::sync::Arc;
-
 use tokio::sync::Mutex;
 
 use crate::gui::{Launcher, Message};
@@ -37,7 +33,7 @@ pub struct LauncherApplication {
   listings: Listings,
 
   request_channel: RequestChannel<Request>,
-  message_tx: Option<mpsc::Sender<Message>>,
+  message_tx: Option<async_channel::Sender<Message>>,
 }
 
 #[async_trait]
@@ -70,7 +66,7 @@ impl LauncherApplication {
   async fn run(&mut self) {
     self.update_listings().await;
 
-    while let Some((request, reply_channel)) = self.request_channel.next().await {
+    while let Ok((request, mut reply_channel)) = self.request_channel.recv().await {
       match request {
         Request::Open => {
           let _ = reply_channel.send(Response::Handled.reply_ok());
@@ -79,7 +75,7 @@ impl LauncherApplication {
         Request::Close => {
           let _ = reply_channel.send(Response::Handled.reply_ok());
           if let Some(message_tx) = &mut self.message_tx {
-            let _ = message_tx.send(Message::Close).await;
+            let _ = message_tx.try_send(Message::Close);
           }
         }
       }
@@ -89,13 +85,13 @@ impl LauncherApplication {
   fn open_launcher(&mut self) -> IcedThread<Result<(), iced_layershell::Error>> {
     let listings = self.listings.clone();
 
-    let (iced_thread, message_tx) = IcedThread::start(move |message_stream| {
+    let (iced_thread, message_tx) = IcedThread::start(move |message_rx| {
       iced_layershell::application(
         move || {
           (
             Launcher::new(listings.clone()),
             Task::batch([
-              message_stream.reciever().map_or(Task::none(), Task::stream),
+              Task::stream(message_rx.clone()),
               Task::done(Message::FocusInput),
             ]),
           )
