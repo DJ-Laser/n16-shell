@@ -1,11 +1,14 @@
 use async_trait::async_trait;
-use iced::{Task, futures::channel::mpsc};
+use iced::{
+  Task,
+  futures::{SinkExt, StreamExt, channel::mpsc},
+};
 use iced_layershell::{
   actions::LayerShellCustomActionWithId, reexport::Anchor, settings::LayerShellSettings,
 };
 use listings::{Listing, Provider};
 use n16_application::{N16Application, RequestChannel, thread::IcedThread};
-use n16_ipc::launcher::Request;
+use n16_ipc::{Response, launcher::Request};
 use std::sync::Arc;
 
 use tokio::sync::Mutex;
@@ -66,7 +69,21 @@ impl LauncherApplication {
 
   async fn run(&mut self) {
     self.update_listings().await;
-    self.open_launcher();
+
+    while let Some((request, reply_channel)) = self.request_channel.next().await {
+      match request {
+        Request::Open => {
+          let _ = reply_channel.send(Response::Handled.reply_ok());
+          let _thread = self.open_launcher();
+        }
+        Request::Close => {
+          let _ = reply_channel.send(Response::Handled.reply_ok());
+          if let Some(message_tx) = &mut self.message_tx {
+            let _ = message_tx.send(Message::Close).await;
+          }
+        }
+      }
+    }
   }
 
   fn open_launcher(&mut self) -> IcedThread<Result<(), iced_layershell::Error>> {
