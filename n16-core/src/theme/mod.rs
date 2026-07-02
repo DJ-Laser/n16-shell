@@ -6,7 +6,7 @@ mod components;
 mod serialize;
 
 #[derive(Debug, Clone, PartialEq)]
-#[allow(non_snake_case)]
+#[expect(non_snake_case)]
 pub struct Base16Theme {
   pub base00: Color,
   pub base01: Color,

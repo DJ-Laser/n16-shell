@@ -6,8 +6,6 @@ use iced::{
   widget::{image, svg},
 };
 
-use crate::Message;
-
 pub trait Provider: Send {
   fn name(&self) -> &'static str;
 
@@ -29,7 +27,7 @@ pub trait Listing: DynClone + Debug + Send {
   fn icon(&self) -> Option<&ListingIcon>;
 
   fn executable(&self) -> bool;
-  fn execute(&self) -> Task<Message>;
+  fn execute(&self) -> Task<()>;
 }
 
 dyn_clone::clone_trait_object!(Listing);

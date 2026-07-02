@@ -9,7 +9,7 @@ use super::Component;
 pub fn view(
   listing: &dyn Listing,
   selected: bool,
-  on_press: crate::Message,
+  on_press: crate::launcher::Message,
 ) -> impl Into<Component> {
   let image_size = 30;
   let font_size = 20;

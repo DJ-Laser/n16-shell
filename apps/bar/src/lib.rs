@@ -73,7 +73,7 @@ impl Bar {
 }
 
 impl Bar {
-  #[allow(clippy::new_without_default)]
+  #[expect(clippy::new_without_default)]
   pub fn new() -> Self {
     Self {
       now: chrono::offset::Local::now(),

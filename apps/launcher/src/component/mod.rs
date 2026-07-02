@@ -4,4 +4,4 @@ use n16_core::theme::Base16Theme;
 pub mod listing;
 pub mod search;
 
-type Component = Element<'static, crate::Message, Base16Theme, iced::Renderer>;
+type Component = Element<'static, crate::launcher::Message, Base16Theme, iced::Renderer>;

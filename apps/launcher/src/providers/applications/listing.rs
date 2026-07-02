@@ -10,7 +10,7 @@ pub struct ListingData {
   icon: Option<ListingIcon>,
   command: Option<String>,
 
-  #[allow(unused)]
+  #[expect(unused)]
   desktop_file: PathBuf,
 }
 
@@ -49,17 +49,14 @@ impl Listing for ListingData {
     self.command.is_some()
   }
 
-  fn execute(&self) -> Task<crate::Message> {
-    self
-      .command
-      .as_ref()
-      .map_or_else::<Task<crate::Message>, _, _>(Task::none, |command| {
-        iced::Task::future(run_entry_command(command.clone()))
-      })
+  fn execute(&self) -> Task<()> {
+    self.command.as_ref().map_or_else(Task::none, |command| {
+      iced::Task::future(run_entry_command(command.clone()))
+    })
   }
 }
 
-async fn run_entry_command(command: String) -> crate::Message {
+async fn run_entry_command(command: String) {
   let args: Vec<&str> = command
     .split_ascii_whitespace()
     .filter(|s| !s.starts_with('%'))
@@ -77,6 +74,4 @@ async fn run_entry_command(command: String) -> crate::Message {
   {
     eprintln!("{}", error);
   };
-
-  crate::Message::ListingExecuted
 }
