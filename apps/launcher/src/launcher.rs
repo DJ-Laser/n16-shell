@@ -219,9 +219,9 @@ impl Launcher {
       .into()
   }
 
-  pub fn subscription(&self) -> Subscription<Message> {
-    Subscription::batch([iced::event::listen_with(
-      |event, _status, _sindow_id| match event {
+  pub fn subscription(&self, window_id: iced::window::Id) -> Subscription<Message> {
+    iced::event::listen_with(|event, _, id| {
+      (match event {
         iced::Event::Window(iced::window::Event::Unfocused) => Some(Message::Close),
         iced::Event::Keyboard(iced::keyboard::Event::KeyPressed { key, .. }) => match key {
           iced::keyboard::Key::Named(key::Named::ArrowUp) => Some(Message::SelectPrevListing),
@@ -231,7 +231,16 @@ impl Launcher {
           _ => None,
         },
         _ => None,
-      },
-    )])
+      })
+      .map(|m| (m, id))
+    })
+    .with(window_id)
+    .filter_map(|(target_id, (message, event_id))| {
+      if target_id == event_id {
+        Some(message)
+      } else {
+        None
+      }
+    })
   }
 }

@@ -10,7 +10,7 @@ use n16_core::{
   theme::Base16Theme,
 };
 use n16_ipc::{Response, launcher::Request};
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
 
 use crate::{
@@ -31,13 +31,13 @@ type Listings = Vec<Box<dyn Listing>>;
 #[derive(Debug, Clone)]
 enum Message {
   RequestRecieved(ApplicationRequest<Request>),
-  Launcher(launcher::Message),
-  Close,
+  Launcher(window::Id, launcher::Message),
+  Close(window::Id),
 }
 
 pub struct LauncherDaemon {
   providers: Providers,
-  launcher_window: Option<(window::Id, Launcher)>,
+  launcher_windows: HashMap<window::Id, Launcher>,
 }
 
 impl LauncherDaemon {
@@ -45,7 +45,7 @@ impl LauncherDaemon {
   pub fn new() -> Self {
     Self {
       providers: Self::setup_providers(),
-      launcher_window: None,
+      launcher_windows: HashMap::new(),
     }
   }
 
@@ -59,7 +59,7 @@ impl LauncherDaemon {
   }
 
   fn open_launcher(&mut self) -> Task<Message> {
-    if self.launcher_window.is_some() {
+    if !self.launcher_windows.is_empty() {
       return Task::none();
     }
 
@@ -71,11 +71,14 @@ impl LauncherDaemon {
     });
 
     let (launcher_window, launcher_task) = Launcher::new(self.providers.clone());
-    self.launcher_window = Some((id, launcher_window));
+    self.launcher_windows.insert(id, launcher_window);
 
     Task::batch([
-      window_task.chain(Task::done(Message::Launcher(launcher::Message::FocusInput))),
-      launcher_task.map(Message::Launcher),
+      window_task.chain(Task::done(Message::Launcher(
+        id,
+        launcher::Message::FocusInput,
+      ))),
+      launcher_task.map(move |m| Message::Launcher(id, m)),
     ])
   }
 
@@ -87,7 +90,7 @@ impl LauncherDaemon {
       }
       Request::Close => {
         request.reply(Response::Handled);
-        Task::done(Message::Close)
+        window::latest().and_then(|id| Task::done(Message::Close(id)))
       }
     }
   }
@@ -97,20 +100,20 @@ impl LauncherDaemon {
   fn update(&mut self, message: Message) -> Task<Message> {
     match message {
       Message::RequestRecieved(request) => self.handle_request(request),
-      Message::Launcher(message) => {
-        if let Some((_, launcher)) = self.launcher_window.as_mut() {
+      Message::Launcher(id, message) => {
+        if let Some(launcher) = self.launcher_windows.get_mut(&id) {
           match launcher.update(message) {
-            launcher::Action::Task(task) => task.map(Message::Launcher),
-            launcher::Action::Close => Task::done(Message::Close),
+            launcher::Action::Task(task) => task.map(move |m| Message::Launcher(id, m)),
+            launcher::Action::Close => Task::done(Message::Close(id)),
           }
         } else {
           Task::none()
         }
       }
 
-      Message::Close => {
-        if let Some((id, _)) = self.launcher_window {
-          self.launcher_window = None;
+      Message::Close(id) => {
+        if self.launcher_windows.contains_key(&id) {
+          self.launcher_windows.remove(&id);
           window::close(id)
         } else {
           Task::none()
@@ -122,21 +125,22 @@ impl LauncherDaemon {
   }
 
   fn view(&self, window_id: window::Id) -> Element<'_, Message, Base16Theme> {
-    if let Some((id, launcher)) = &self.launcher_window
-      && *id == window_id
-    {
-      launcher.view().map(Message::Launcher)
+    if let Some(launcher) = &self.launcher_windows.get(&window_id) {
+      launcher
+        .view()
+        .map(move |m| Message::Launcher(window_id, m))
     } else {
       "".into()
     }
   }
 
   fn subscription(&self) -> Subscription<Message> {
-    self
-      .launcher_window
-      .as_ref()
-      .map(|(_, launcher)| launcher.subscription().map(Message::Launcher))
-      .unwrap_or(Subscription::none())
+    Subscription::batch(self.launcher_windows.iter().map(|(id, launcher)| {
+      launcher
+        .subscription(*id)
+        .with(*id)
+        .map(|(id, m)| Message::Launcher(id, m))
+    }))
   }
 }
 
