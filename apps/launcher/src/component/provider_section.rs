@@ -1,15 +1,15 @@
-use iced::widget::column;
+use iced::widget::{column, text};
 
 use super::{Component, match_entry};
 use crate::providers::{Match, ProviderInfo};
 
 pub fn view(
-  _provider_info: &ProviderInfo,
+  provider_info: &ProviderInfo,
   matches: Vec<&Match>,
   selected: Option<usize>,
   on_press: impl Fn(usize) -> crate::launcher::Message,
 ) -> impl Into<Component> {
-  let mut matches_veiw = column![];
+  let mut matches_veiw = column![text(provider_info.name.to_string())];
 
   for (idx, match_entry) in matches.into_iter().enumerate() {
     let is_selected: bool = selected.is_some_and(|s| s == idx);
