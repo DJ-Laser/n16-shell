@@ -260,6 +260,10 @@ impl Launcher {
         (None, None) => continue,
       };
 
+      if matches.is_empty() {
+        continue;
+      }
+
       let selected = if idx == self.selected_idx.0 {
         Some(self.selected_idx.1)
       } else {
