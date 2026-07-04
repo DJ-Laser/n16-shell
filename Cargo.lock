@@ -2694,9 +2694,11 @@ name = "n16-launcher"
 version = "0.1.1"
 dependencies = [
  "async-channel",
+ "async-trait",
  "dyn-clone",
  "fend-core",
  "freedesktop-desktop-entry",
+ "futures-lite",
  "iced",
  "iced_layershell",
  "itertools 0.15.0",

@@ -1,13 +1,7 @@
 use iced::widget::text_input;
 
 use super::Component;
-use crate::{launcher::Message, listings::Listing};
-
-pub fn filter_listing(listing: &dyn Listing, query: &str) -> bool {
-  let trimmed: String = query.split_whitespace().collect::<String>().to_lowercase();
-
-  listing.name().to_lowercase().contains(&trimmed)
-}
+use crate::launcher::Message;
 
 pub const SEARCH_INPUT_ID: &str = "SEARCH_QUERY_INPUT";
 

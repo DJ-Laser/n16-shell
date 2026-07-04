@@ -1,33 +1,29 @@
-use std::mem;
+use std::{collections::HashMap, time::Duration};
 
 use iced::{
   Element, Length, Subscription, Task, gradient,
   keyboard::key,
-  widget::{column, container, operation, rule, text},
+  widget::{column, container, operation, rule},
 };
-use n16_core::{
-  scrolled_column,
-  theme::{self, Base16Theme},
-};
+use n16_core::theme::{self, Base16Theme};
 
 use crate::{
-  Listings, Providers,
-  calculator::Calculator,
+  Providers,
   component::{
-    listing,
+    provider_section,
     search::{self, SEARCH_INPUT_ID},
   },
+  providers::{ExecutionFinishAction, Match, Matches, ProviderId, ProviderInfo},
 };
 
 pub struct Launcher {
-  calculator: Calculator,
-  calculator_result: Option<String>,
+  query: String,
+  selected_idx: (usize, usize),
 
   providers: Providers,
-  listings: Listings,
-  filtered_listings: Vec<usize>,
-  query: String,
-  selected_idx: usize,
+  provider_info: Vec<ProviderInfo>,
+  static_matches: HashMap<ProviderId, Vec<Match>>,
+  dynamic_matches: HashMap<ProviderId, Vec<Match>>,
 }
 
 #[derive(Debug)]
@@ -39,30 +35,39 @@ pub enum Action {
 #[derive(Debug, Clone)]
 pub enum Message {
   Close,
-  SearchQueryChanged(String),
-  SelectNextListing,
-  SelectPrevListing,
-  RunSelected,
-  ListingClicked(usize),
   FocusInput,
-  UpdatedListings(Listings),
-  CalculatorResult(Option<String>),
+  SelectPrev,
+  SelectNext,
+  RunSelected,
+  RunIdx((usize, usize)),
+  SearchQueryChanged(String),
+  UpdateStaticMatches(Matches),
+  UpdateDynamicMatches(String, Matches),
+  ProviderExecutionFinished(ExecutionFinishAction),
 }
 
 impl Launcher {
-  pub fn new(providers: Providers) -> (Self, Task<Message>) {
+  pub fn new(mut providers: Providers) -> (Self, Task<Message>) {
+    let provider_task =
+      Task::stream(providers.get_static_matches()).map(Message::UpdateStaticMatches);
+
     (
       Self {
-        calculator: Default::default(),
-        calculator_result: None,
-
-        providers: providers.clone(),
-        listings: Vec::new(),
-        filtered_listings: Vec::new(),
         query: String::new(),
-        selected_idx: 0,
+        selected_idx: (0, 0),
+
+        provider_info: providers.get_sorted_provider_info(),
+        providers,
+        static_matches: HashMap::new(),
+        dynamic_matches: HashMap::new(),
       },
-      Task::future(Self::update_listings(providers)).map(Message::UpdatedListings),
+      Task::batch([
+        provider_task,
+        Task::future(async {
+          tokio::time::sleep(Duration::from_millis(250)).await;
+          Message::FocusInput
+        }),
+      ]),
     )
   }
 
@@ -70,36 +75,105 @@ impl Launcher {
     Task::none()
   }
 
-  fn filter_listings(&mut self) {
-    self.filtered_listings.clear();
-    self.filtered_listings.extend(
-      self
-        .listings
-        .iter()
-        .enumerate()
-        .filter(|(_idx, listing)| search::filter_listing(listing.as_ref(), &self.query))
-        .map(|(idx, _listing)| idx),
-    );
-  }
-
   fn update_query(&mut self, new_query: &str) -> Task<Message> {
     self.query.clear();
     self.query.push_str(new_query);
-    self.selected_idx = 0;
-    self.filter_listings();
+    self.selected_idx = (0, 0);
 
-    Task::done(self.calculator.calculate_preview(&self.query)).map(Message::CalculatorResult)
+    if !self.query.is_empty() {
+      let query = self.query.clone();
+      Task::stream(self.providers.get_dynamic_matches(query.clone()))
+        .map(move |matches| Message::UpdateDynamicMatches(query.clone(), matches))
+    } else {
+      for matches in self.dynamic_matches.values_mut() {
+        matches.clear();
+      }
+
+      Task::none()
+    }
   }
 
-  async fn update_listings(providers: Providers) -> Listings {
-    let mut providers = providers.lock().await;
+  fn get_num_matches(&self, id: &str) -> usize {
+    self.static_matches.get(id).map_or(0, Vec::len)
+      + self.dynamic_matches.get(id).map_or(0, Vec::len)
+  }
 
-    let listings = providers
-      .iter_mut()
-      .filter_map(|provider| provider.update_listings())
-      .flatten();
+  fn get_prev_idx(&self) -> (usize, usize) {
+    let mut idx = self.selected_idx;
 
-    listings.collect()
+    if idx.1 == 0 {
+      if idx.0 == 0 {
+        idx.0 = self.provider_info.len();
+      }
+
+      idx.0 -= 1;
+      idx.1 = self.get_num_matches(&self.provider_info[idx.0].id);
+    }
+
+    idx.1 -= 1;
+
+    idx
+  }
+
+  fn get_next_idx(&self) -> (usize, usize) {
+    let Some(info) = self.provider_info.get(self.selected_idx.0) else {
+      return (0, 0);
+    };
+
+    let mut idx = self.selected_idx;
+    idx.1 += 1;
+    if idx.1 >= self.get_num_matches(&info.id) {
+      idx.0 += 1;
+      idx.1 = 0;
+
+      if idx.0 >= self.provider_info.len() {
+        idx.0 = 0
+      }
+    }
+
+    idx
+  }
+
+  fn get_match_at(&self, idx: (usize, usize)) -> Option<(&String, &Match)> {
+    let id = &self.provider_info.get(idx.0)?.id;
+
+    let dynamic_len = if let Some(dynamic_matches) = self.dynamic_matches.get(id) {
+      if idx.1 < dynamic_matches.len() {
+        return Some((id, &dynamic_matches[idx.1]));
+      }
+
+      dynamic_matches.len()
+    } else {
+      0
+    };
+
+    if let Some(static_matches) = self.static_matches.get(id) {
+      let static_idx = idx.1 - dynamic_len;
+      if static_idx < static_matches.len() {
+        return Some((id, &static_matches[static_idx]));
+      }
+    }
+
+    None
+  }
+
+  fn filter_static_match(&self, static_match: &Match) -> bool {
+    let trimmed: String = self
+      .query
+      .split_whitespace()
+      .collect::<String>()
+      .to_lowercase();
+
+    static_match
+      .title
+      .split_whitespace()
+      .collect::<String>()
+      .to_lowercase()
+      .contains(&trimmed)
+      || static_match
+        .keywords
+        .iter()
+        .any(|kw| trimmed.contains(&kw.to_lowercase()))
   }
 }
 
@@ -109,92 +183,101 @@ impl Launcher {
       Message::Close => return Action::Close,
 
       Message::RunSelected => {
-        if let Some(listing_idx) = self.filtered_listings.get(self.selected_idx) {
-          self.listings[*listing_idx]
-            .execute()
-            .map(|_| Message::Close)
+        if let Some((id, selected_match)) = self.get_match_at(self.selected_idx) {
+          let p = self.providers.clone();
+          Task::future(p.execute_match((id.clone(), selected_match.clone())))
+            .and_then(|a| Task::done(Message::ProviderExecutionFinished(a)))
         } else {
           Task::none()
         }
       }
 
-      Message::ListingClicked(idx) => self.listings[idx].execute().map(|_| Message::Close),
+      Message::RunIdx(idx) => {
+        if let Some((id, selected_match)) = self.get_match_at(idx) {
+          let p = self.providers.clone();
+          Task::future(p.execute_match((id.clone(), selected_match.clone())))
+            .and_then(|a| Task::done(Message::ProviderExecutionFinished(a)))
+        } else {
+          Task::none()
+        }
+      }
 
       Message::SearchQueryChanged(new_query) => self.update_query(&new_query),
 
-      Message::SelectNextListing => {
-        if self.filtered_listings.is_empty()
-          || self.selected_idx >= self.filtered_listings.len() - 1
-        {
-          self.selected_idx = 0;
-        } else {
-          self.selected_idx += 1;
-        }
-
+      Message::SelectPrev => {
+        self.selected_idx = self.get_prev_idx();
         self.scroll_to_selected()
       }
 
-      Message::SelectPrevListing => {
-        if self.filtered_listings.is_empty() {
-          self.selected_idx = 0;
-        } else if self.selected_idx == 0 {
-          self.selected_idx = self.filtered_listings.len() - 1;
-        } else {
-          self.selected_idx -= 1;
-        }
-
+      Message::SelectNext => {
+        self.selected_idx = self.get_next_idx();
         self.scroll_to_selected()
       }
 
       Message::FocusInput => operation::focus(SEARCH_INPUT_ID),
 
-      Message::UpdatedListings(new_listings) => {
-        let _ = mem::replace(&mut self.listings, new_listings);
-        self.filter_listings();
+      Message::UpdateStaticMatches(static_matches) => {
+        self
+          .static_matches
+          .insert(static_matches.id, static_matches.matches);
+        Task::none()
+      }
+
+      Message::UpdateDynamicMatches(query, dynamic_matches) => {
+        if query == self.query {
+          self
+            .dynamic_matches
+            .insert(dynamic_matches.id, dynamic_matches.matches);
+        }
 
         Task::none()
       }
 
-      Message::CalculatorResult(result) => {
-        self.calculator_result = result;
-        Task::none()
-      }
+      Message::ProviderExecutionFinished(action) => match action {
+        ExecutionFinishAction::Close => Task::done(Message::Close),
+      },
     };
 
     Action::Task(task)
   }
 
   pub fn view(&self) -> Element<'_, Message, Base16Theme> {
-    let mut listings = scrolled_column![]
-      .height(Length::Fill)
-      .view_child(self.selected_idx);
+    let mut provider_sections = column![];
 
-    for (filtered_idx, listing_idx) in self.filtered_listings.iter().enumerate() {
-      let selected = filtered_idx == self.selected_idx;
-      listings = listings.push(listing::view(
-        self.listings[*listing_idx].as_ref(),
-        selected,
-        Message::ListingClicked(*listing_idx),
-      ));
+    for (idx, info) in self.provider_info.iter().enumerate() {
+      let matches: Vec<&Match> = match (
+        self.dynamic_matches.get(&info.id).map(|v| v.iter()),
+        self
+          .static_matches
+          .get(&info.id)
+          .map(|v| v.iter().filter(|m| self.filter_static_match(m))),
+      ) {
+        (Some(dynamic_matches), Some(static_matches)) => {
+          dynamic_matches.chain(static_matches).collect()
+        }
+        (Some(dynamic_matches), None) => dynamic_matches.collect(),
+        (None, Some(static_matches)) => static_matches.collect(),
+        (None, None) => continue,
+      };
+
+      let selected = if idx == self.selected_idx.0 {
+        Some(self.selected_idx.1)
+      } else {
+        None
+      };
+
+      provider_sections =
+        provider_sections.push(provider_section::view(info, matches, selected, |sub_idx| {
+          Message::RunIdx((idx, sub_idx))
+        }));
     }
 
-    let mut column = column![search::view(&self.query).into()];
-
-    if let Some(result) = &self.calculator_result {
-      column = column.push(
-        column![
-          rule::horizontal(1).style(|theme: &Base16Theme| theme::rule::colored(theme.base02))
-        ]
-        .height(20),
-      );
-      column = column.push(text(result));
-    }
-
-    column = column.push(
+    let column = column![
+      search::view(&self.query).into(),
       column![rule::horizontal(1).style(|theme: &Base16Theme| theme::rule::colored(theme.base02))]
         .height(20),
-    );
-    column = column.push(listings);
+      provider_sections
+    ];
 
     let inner = container(column)
       .height(Length::Fill)
@@ -224,8 +307,8 @@ impl Launcher {
       (match event {
         iced::Event::Window(iced::window::Event::Unfocused) => Some(Message::Close),
         iced::Event::Keyboard(iced::keyboard::Event::KeyPressed { key, .. }) => match key {
-          iced::keyboard::Key::Named(key::Named::ArrowUp) => Some(Message::SelectPrevListing),
-          iced::keyboard::Key::Named(key::Named::ArrowDown) => Some(Message::SelectNextListing),
+          iced::keyboard::Key::Named(key::Named::ArrowUp) => Some(Message::SelectPrev),
+          iced::keyboard::Key::Named(key::Named::ArrowDown) => Some(Message::SelectNext),
           iced::keyboard::Key::Named(key::Named::Enter) => Some(Message::RunSelected),
           iced::keyboard::Key::Named(key::Named::Escape) => Some(Message::Close),
           _ => None,

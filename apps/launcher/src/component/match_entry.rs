@@ -2,12 +2,12 @@ use iced::widget::{Space, button, image, row, svg, text};
 use iced::{Length, alignment};
 use n16_core::theme::{self, Base16Theme};
 
-use crate::listings::{Listing, ListingIcon};
+use crate::providers::{Match, MatchIcon};
 
 use super::Component;
 
 pub fn view(
-  listing: &dyn Listing,
+  match_entry: &Match,
   selected: bool,
   on_press: crate::launcher::Message,
 ) -> impl Into<Component> {
@@ -19,12 +19,12 @@ pub fn view(
     .width(Length::Fill)
     .spacing(10);
 
-  match listing.icon() {
-    Some(ListingIcon::Bitmap(handle)) => {
+  match match_entry.icon.clone() {
+    Some(MatchIcon::Bitmap(handle)) => {
       let image = image(handle).width(image_size).height(image_size);
       row = row.push(image);
     }
-    Some(ListingIcon::Vector(handle)) => {
+    Some(MatchIcon::Vector(handle)) => {
       let svg = svg(handle.clone()).width(image_size).height(image_size);
       row = row.push(svg);
     }
@@ -35,7 +35,7 @@ pub fn view(
   }
 
   row = row.push(
-    text(listing.name().to_string())
+    text(match_entry.title.to_string())
       .align_y(alignment::Vertical::Center)
       .height(image_size)
       .size(font_size),

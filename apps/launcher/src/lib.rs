@@ -4,28 +4,23 @@ use iced_layershell::{
   settings::{LayerShellSettings, StartMode},
   to_layer_message,
 };
-use listings::{Listing, Provider};
 use n16_core::{
   application::{ApplicationRequest, N16Application, RequestChannel},
   theme::Base16Theme,
 };
 use n16_ipc::{Response, launcher::Request};
-use std::{collections::HashMap, sync::Arc};
-use tokio::sync::Mutex;
+use std::collections::HashMap;
 
 use crate::{
   launcher::Launcher,
-  providers::{ApplicationProvider, PowerManagementProvider},
+  providers::{
+    ApplicationProvider, CalculatorProvider, PowerManagementProvider, Providers, ProvidersBuilder,
+  },
 };
 
-mod calculator;
 mod component;
 mod launcher;
-pub mod listings;
 pub mod providers;
-
-type Providers = Arc<Mutex<Vec<Box<dyn Provider>>>>;
-type Listings = Vec<Box<dyn Listing>>;
 
 #[to_layer_message(multi)]
 #[derive(Debug, Clone)]
@@ -50,12 +45,13 @@ impl LauncherDaemon {
   }
 
   pub fn setup_providers() -> Providers {
-    let providers: Vec<Box<dyn Provider>> = vec![
-      Box::new(ApplicationProvider::new()),
-      Box::new(PowerManagementProvider::new()),
-    ];
+    let mut builder = ProvidersBuilder::new();
 
-    Arc::new(Mutex::new(providers))
+    builder.add_provider::<CalculatorProvider>();
+    builder.add_provider::<ApplicationProvider>();
+    builder.add_provider::<PowerManagementProvider>();
+
+    builder.build()
   }
 
   fn open_launcher(&mut self) -> Task<Message> {
@@ -74,10 +70,7 @@ impl LauncherDaemon {
     self.launcher_windows.insert(id, launcher_window);
 
     Task::batch([
-      window_task.chain(Task::done(Message::Launcher(
-        id,
-        launcher::Message::FocusInput,
-      ))),
+      window_task,
       launcher_task.map(move |m| Message::Launcher(id, m)),
     ])
   }
