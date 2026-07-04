@@ -113,6 +113,7 @@ impl Provider for ApplicationProvider {
       ProviderInfo {
         id: "n16/applications".into(),
         name: "Applications".into(),
+        priorty: 0,
         provider_type: ProviderType::Static,
       },
       Self {

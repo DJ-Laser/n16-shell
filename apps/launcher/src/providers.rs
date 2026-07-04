@@ -27,6 +27,8 @@ pub struct ProviderInfo {
   pub id: ProviderId,
   /// Provider name shown to the user
   pub name: String,
+  /// Priority, higher appears first
+  pub priorty: i64,
   /// Provider type
   pub provider_type: ProviderType,
 }
@@ -100,6 +102,7 @@ impl Providers {
       .cloned()
       .collect();
     info.sort_by(|a, b| a.name.cmp(&b.name));
+    info.sort_by_key(|b| std::cmp::Reverse(b.priorty));
     info
   }
 

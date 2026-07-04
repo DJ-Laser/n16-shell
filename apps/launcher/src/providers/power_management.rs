@@ -109,6 +109,7 @@ impl Provider for PowerManagementProvider {
       ProviderInfo {
         id: "n16/power_management".into(),
         name: "Power Management".into(),
+        priorty: -1,
         provider_type: ProviderType::Static,
       },
       this,

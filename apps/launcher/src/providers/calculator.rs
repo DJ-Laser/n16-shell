@@ -61,6 +61,7 @@ impl Provider for CalculatorProvider {
       ProviderInfo {
         id: "n16/calculator".into(),
         name: "Calculator".into(),
+        priorty: 10,
         provider_type: ProviderType::Dynamic,
       },
       Self::new(),
