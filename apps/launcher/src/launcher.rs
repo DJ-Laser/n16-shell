@@ -97,40 +97,54 @@ impl Launcher {
     self.matches.get(id).map_or(0, Vec::len)
   }
 
-  fn get_prev_idx(&self) -> (usize, usize) {
-    let mut idx = self.selected_idx;
-
-    if idx.1 == 0 {
-      if idx.0 == 0 {
-        idx.0 = self.provider_info.len();
-      }
-
-      idx.0 -= 1;
-      idx.1 = self.get_num_matches(&self.provider_info[idx.0].id);
+  fn get_prev_idx(&self, from_idx: (usize, usize)) -> (usize, usize) {
+    if from_idx.1 != 0 {
+      return (from_idx.0, from_idx.1 - 1);
     }
 
-    idx.1 -= 1;
+    let idx_0_len = self.provider_info.len();
+    let mut curr_idx_0 = usize::min(from_idx.0, idx_0_len);
 
-    idx
+    for _ in 0..idx_0_len {
+      if curr_idx_0 == 0 {
+        curr_idx_0 = idx_0_len;
+      }
+      curr_idx_0 -= 1;
+
+      match self.get_num_matches(&self.provider_info[curr_idx_0].id) {
+        0 => continue,
+        idx_1_len => return (curr_idx_0, idx_1_len - 1),
+      }
+    }
+
+    (0, 0)
   }
 
-  fn get_next_idx(&self) -> (usize, usize) {
-    let Some(info) = self.provider_info.get(self.selected_idx.0) else {
+  fn get_next_idx(&self, from_idx: (usize, usize)) -> (usize, usize) {
+    let Some(info) = self.provider_info.get(from_idx.0) else {
       return (0, 0);
     };
 
-    let mut idx = self.selected_idx;
-    idx.1 += 1;
-    if idx.1 >= self.get_num_matches(&info.id) {
-      idx.0 += 1;
-      idx.1 = 0;
+    if from_idx.1 <= self.get_num_matches(&info.id) {
+      return (from_idx.0, from_idx.1 + 1);
+    }
 
-      if idx.0 >= self.provider_info.len() {
-        idx.0 = 0
+    let idx_0_len = self.provider_info.len();
+    let mut curr_idx_0 = from_idx.0;
+
+    for _ in 0..idx_0_len {
+      curr_idx_0 += 1;
+      if curr_idx_0 >= idx_0_len {
+        curr_idx_0 = 0;
+      }
+
+      match self.get_num_matches(&self.provider_info[curr_idx_0].id) {
+        0 => continue,
+        _ => return (curr_idx_0, 0),
       }
     }
 
-    idx
+    (0, 0)
   }
 
   fn get_match_at(&self, idx: (usize, usize)) -> Option<(&String, &Match)> {
@@ -192,12 +206,12 @@ impl Launcher {
       Message::SearchQueryChanged(new_query) => self.update_query(&new_query),
 
       Message::SelectPrev => {
-        self.selected_idx = self.get_prev_idx();
+        self.selected_idx = self.get_prev_idx(self.selected_idx);
         self.scroll_to_selected()
       }
 
       Message::SelectNext => {
-        self.selected_idx = self.get_next_idx();
+        self.selected_idx = self.get_next_idx(self.selected_idx);
         self.scroll_to_selected()
       }
 
