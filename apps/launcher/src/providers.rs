@@ -47,7 +47,7 @@ pub trait Provider: Send {
     Self: Sized;
 
   /// Get the static matches
-  /// `ProviderType::Dynamic` Providers may also return static matches
+  /// Only called on `ProviderType::Static` Providers
   async fn matches(&self) -> Vec<Match>;
 
   /// Update the dynamic matches based on the search text
@@ -111,10 +111,12 @@ impl Providers {
     let providers = self.providers.clone();
     tokio::spawn(async move {
       for (info, provider) in providers.values() {
-        let _ = matches_tx.try_send(Matches {
-          id: info.id.clone(),
-          matches: provider.matches().await,
-        });
+        if matches!(info.provider_type, ProviderType::Static) {
+          let _ = matches_tx.try_send(Matches {
+            id: info.id.clone(),
+            matches: provider.matches().await,
+          });
+        }
       }
     });
 
@@ -150,7 +152,7 @@ impl Providers {
         return;
       };
 
-      println!("Processing providers: {:?}", providers.keys().nth(0));
+      println!("Processing provider: {id}");
 
       let _ = action_tx
         .send(Some(provider.execute_match(selected_match).await))

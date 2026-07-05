@@ -3,7 +3,7 @@ use std::{collections::HashMap, time::Duration};
 use iced::{
   Element, Length, Subscription, Task, gradient,
   keyboard::key,
-  widget::{column, container, operation, rule},
+  widget::{column, container, operation, rule, scrollable},
 };
 use n16_core::theme::{self, Base16Theme};
 
@@ -13,7 +13,7 @@ use crate::{
     provider_section,
     search::{self, SEARCH_INPUT_ID},
   },
-  providers::{ExecutionFinishAction, Match, Matches, ProviderId, ProviderInfo},
+  providers::{ExecutionFinishAction, Match, Matches, ProviderId, ProviderInfo, ProviderType},
 };
 
 pub struct Launcher {
@@ -22,8 +22,7 @@ pub struct Launcher {
 
   providers: Providers,
   provider_info: Vec<ProviderInfo>,
-  static_matches: HashMap<ProviderId, Vec<Match>>,
-  dynamic_matches: HashMap<ProviderId, Vec<Match>>,
+  matches: HashMap<ProviderId, Vec<Match>>,
 }
 
 #[derive(Debug)]
@@ -58,8 +57,7 @@ impl Launcher {
 
         provider_info: providers.get_sorted_provider_info(),
         providers,
-        static_matches: HashMap::new(),
-        dynamic_matches: HashMap::new(),
+        matches: HashMap::new(),
       },
       Task::batch([
         provider_task,
@@ -72,7 +70,7 @@ impl Launcher {
   }
 
   fn scroll_to_selected(&self) -> Task<Message> {
-    Task::none()
+    Task::none() //operation::scroll_to(id, offset)
   }
 
   fn update_query(&mut self, new_query: &str) -> Task<Message> {
@@ -85,8 +83,10 @@ impl Launcher {
       Task::stream(self.providers.get_dynamic_matches(query.clone()))
         .map(move |matches| Message::UpdateDynamicMatches(query.clone(), matches))
     } else {
-      for matches in self.dynamic_matches.values_mut() {
-        matches.clear();
+      for info in self.provider_info.iter() {
+        if matches!(info.provider_type, ProviderType::Dynamic) {
+          self.matches.remove(&info.id);
+        }
       }
 
       Task::none()
@@ -94,8 +94,7 @@ impl Launcher {
   }
 
   fn get_num_matches(&self, id: &str) -> usize {
-    self.static_matches.get(id).map_or(0, Vec::len)
-      + self.dynamic_matches.get(id).map_or(0, Vec::len)
+    self.matches.get(id).map_or(0, Vec::len)
   }
 
   fn get_prev_idx(&self) -> (usize, usize) {
@@ -137,24 +136,12 @@ impl Launcher {
   fn get_match_at(&self, idx: (usize, usize)) -> Option<(&String, &Match)> {
     let id = &self.provider_info.get(idx.0)?.id;
 
-    let dynamic_len = if let Some(dynamic_matches) = self.dynamic_matches.get(id) {
-      if idx.1 < dynamic_matches.len() {
-        return Some((id, &dynamic_matches[idx.1]));
-      }
-
-      dynamic_matches.len()
+    let matches = self.matches.get(id)?;
+    if idx.1 < matches.len() {
+      Some((id, &matches[idx.1]))
     } else {
-      0
-    };
-
-    if let Some(static_matches) = self.static_matches.get(id) {
-      let static_idx = idx.1 - dynamic_len;
-      if static_idx < static_matches.len() {
-        return Some((id, &static_matches[static_idx]));
-      }
+      None
     }
-
-    None
   }
 
   fn filter_static_match(&self, static_match: &Match) -> bool {
@@ -218,7 +205,7 @@ impl Launcher {
 
       Message::UpdateStaticMatches(static_matches) => {
         self
-          .static_matches
+          .matches
           .insert(static_matches.id, static_matches.matches);
         Task::none()
       }
@@ -226,7 +213,7 @@ impl Launcher {
       Message::UpdateDynamicMatches(query, dynamic_matches) => {
         if query == self.query {
           self
-            .dynamic_matches
+            .matches
             .insert(dynamic_matches.id, dynamic_matches.matches);
         }
 
@@ -245,19 +232,17 @@ impl Launcher {
     let mut provider_sections = column![];
 
     for (idx, info) in self.provider_info.iter().enumerate() {
-      let matches: Vec<&Match> = match (
-        self.dynamic_matches.get(&info.id).map(|v| v.iter()),
-        self
-          .static_matches
-          .get(&info.id)
-          .map(|v| v.iter().filter(|m| self.filter_static_match(m))),
-      ) {
-        (Some(dynamic_matches), Some(static_matches)) => {
-          dynamic_matches.chain(static_matches).collect()
-        }
-        (Some(dynamic_matches), None) => dynamic_matches.collect(),
-        (None, Some(static_matches)) => static_matches.collect(),
-        (None, None) => continue,
+      let Some(matches) = self.matches.get(&info.id) else {
+        continue;
+      };
+
+      let matches = matches.iter().enumerate();
+      let matches: Vec<(usize, &Match)> = if matches!(info.provider_type, ProviderType::Static) {
+        matches
+          .filter(|(_, m)| self.filter_static_match(m))
+          .collect()
+      } else {
+        matches.collect()
       };
 
       if matches.is_empty() {
@@ -280,7 +265,7 @@ impl Launcher {
       search::view(&self.query).into(),
       column![rule::horizontal(1).style(|theme: &Base16Theme| theme::rule::colored(theme.base02))]
         .height(20),
-      provider_sections
+      scrollable(provider_sections)
     ];
 
     let inner = container(column)

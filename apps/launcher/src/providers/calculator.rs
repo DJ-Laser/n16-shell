@@ -69,7 +69,7 @@ impl Provider for CalculatorProvider {
   }
 
   async fn matches(&self) -> Vec<Match> {
-    return Vec::new();
+    unimplemented!()
   }
 
   async fn matches_dynamic(&self, search_text: String) -> Vec<Match> {
