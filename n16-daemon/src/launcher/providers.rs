@@ -168,7 +168,6 @@ pub struct ProvidersBuilder {
 }
 
 impl ProvidersBuilder {
-  #[expect(clippy::new_without_default)]
   pub fn new() -> Self {
     Self {
       providers: HashMap::new(),

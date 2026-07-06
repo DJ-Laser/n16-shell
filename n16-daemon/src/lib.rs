@@ -1,14 +1,16 @@
 use std::{ops::ControlFlow, pin::pin, process};
 
+use bar::Bar;
 use futures_lite::StreamExt;
-use n16_bar::Bar;
+use launcher::LauncherDaemon;
 use n16_ipc::{Request, Response};
-use n16_launcher::LauncherDaemon;
 
 use crate::{application::run_application, ipc::run_ipc_server};
 
 mod application;
+mod bar;
 mod ipc;
+mod launcher;
 
 pub async fn run_daemon() -> ! {
   let mut applications = [

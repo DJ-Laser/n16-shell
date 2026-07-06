@@ -4,29 +4,29 @@ use iced_layershell::{
   settings::{LayerShellSettings, StartMode},
   to_layer_message,
 };
-use n16_core::{
-  application::{ApplicationRequest, N16Application, RequestChannel},
-  theme::Base16Theme,
-};
+use n16_core::theme::Base16Theme;
 use n16_ipc::{Response, launcher::Request};
 use std::collections::HashMap;
 
 use crate::{
-  launcher::Launcher,
-  providers::{
-    ApplicationProvider, CalculatorProvider, PowerManagementProvider, Providers, ProvidersBuilder,
+  application::{ApplicationRequest, N16Application, RequestChannel},
+  launcher::{
+    gui::Launcher,
+    providers::{
+      ApplicationProvider, CalculatorProvider, PowerManagementProvider, Providers, ProvidersBuilder,
+    },
   },
 };
 
 mod component;
-mod launcher;
+mod gui;
 pub mod providers;
 
 #[to_layer_message(multi)]
 #[derive(Debug, Clone)]
 enum Message {
   RequestRecieved(ApplicationRequest<Request>),
-  Launcher(window::Id, launcher::Message),
+  Launcher(window::Id, gui::Message),
   Close(window::Id),
 }
 
@@ -36,7 +36,6 @@ pub struct LauncherDaemon {
 }
 
 impl LauncherDaemon {
-  #[expect(clippy::new_without_default)]
   pub fn new() -> Self {
     Self {
       providers: Self::setup_providers(),
@@ -96,8 +95,8 @@ impl LauncherDaemon {
       Message::Launcher(id, message) => {
         if let Some(launcher) = self.launcher_windows.get_mut(&id) {
           match launcher.update(message) {
-            launcher::Action::Task(task) => task.map(move |m| Message::Launcher(id, m)),
-            launcher::Action::Close => Task::done(Message::Close(id)),
+            gui::Action::Task(task) => task.map(move |m| Message::Launcher(id, m)),
+            gui::Action::Close => Task::done(Message::Close(id)),
           }
         } else {
           Task::none()

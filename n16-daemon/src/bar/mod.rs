@@ -8,13 +8,13 @@ use iced_layershell::{
   settings::{LayerShellSettings, StartMode},
   to_layer_message,
 };
-use n16_core::{
-  application::{ApplicationRequest, N16Application, RequestChannel},
-  theme::{self},
-};
+use n16_core::theme::{self};
 use n16_ipc::{Response, bar::Request};
 
-use crate::components::clock;
+use crate::{
+  application::{ApplicationRequest, N16Application, RequestChannel},
+  bar::components::clock,
+};
 
 mod components;
 
@@ -73,7 +73,6 @@ impl Bar {
 }
 
 impl Bar {
-  #[expect(clippy::new_without_default)]
   pub fn new() -> Self {
     Self {
       now: chrono::offset::Local::now(),

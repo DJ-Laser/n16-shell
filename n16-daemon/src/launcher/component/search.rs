@@ -1,7 +1,7 @@
 use iced::widget::text_input;
 
 use super::Component;
-use crate::launcher::Message;
+use crate::launcher::gui::Message;
 
 pub const SEARCH_INPUT_ID: &str = "SEARCH_QUERY_INPUT";
 

@@ -1,7 +1,9 @@
 use async_trait::async_trait;
 use fend_core::{Context, FendResult, Interrupt};
 
-use crate::providers::{ExecutionFinishAction, Match, Provider, ProviderInfo, ProviderType};
+use crate::launcher::providers::{
+  ExecutionFinishAction, Match, Provider, ProviderInfo, ProviderType,
+};
 
 #[derive(Default, Debug)]
 pub struct CalculatorProvider {

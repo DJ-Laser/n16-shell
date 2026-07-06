@@ -7,9 +7,6 @@ edition.workspace = true
 n16-core.workspace = true
 n16-ipc.workspace = true
 
-n16-launcher.workspace = true
-n16-bar.workspace = true
-
 iced.workspace = true
 iced_layershell.workspace = true
 
@@ -19,3 +16,13 @@ tokio.workspace = true
 tokio-stream.workspace = true
 async-channel.workspace = true
 futures-lite.workspace = true
+async-trait.workspace = true
+
+itertools.workspace = true
+
+freedesktop-desktop-entry = "0.8.1"
+tini = "1.3.0"
+xdg = "3.0.0"
+fend-core = "1.5.6"
+
+chrono = "0.4.39"

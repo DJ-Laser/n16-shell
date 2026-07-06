@@ -2,14 +2,14 @@ use iced::widget::{Space, button, image, row, svg, text};
 use iced::{Length, alignment};
 use n16_core::theme::{self, Base16Theme};
 
-use crate::providers::{Match, MatchIcon};
+use crate::launcher::providers::{Match, MatchIcon};
 
 use super::Component;
 
 pub fn view(
   match_entry: &Match,
   selected: bool,
-  on_press: crate::launcher::Message,
+  on_press: crate::launcher::gui::Message,
 ) -> impl Into<Component> {
   let image_size = 30;
   let font_size = 20;

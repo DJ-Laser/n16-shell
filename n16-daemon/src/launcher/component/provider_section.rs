@@ -1,13 +1,13 @@
 use iced::widget::{column, text};
 
 use super::{Component, match_entry};
-use crate::providers::{Match, ProviderInfo};
+use crate::launcher::providers::{Match, ProviderInfo};
 
 pub fn view(
   provider_info: &ProviderInfo,
   matches: Vec<(usize, &Match)>,
   selected: Option<usize>,
-  on_press: impl Fn(usize) -> crate::launcher::Message,
+  on_press: impl Fn(usize) -> crate::launcher::gui::Message,
 ) -> impl Into<Component> {
   let mut matches_veiw = column![text(provider_info.name.to_string())];
 

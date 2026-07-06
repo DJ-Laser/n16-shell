@@ -2,7 +2,9 @@ use std::process;
 
 use async_trait::async_trait;
 
-use crate::providers::{ExecutionFinishAction, Match, Provider, ProviderInfo, ProviderType};
+use crate::launcher::providers::{
+  ExecutionFinishAction, Match, Provider, ProviderInfo, ProviderType,
+};
 
 struct PowerManagementInfo {
   title: &'static str,
@@ -65,7 +67,6 @@ pub struct PowerManagementProvider {
 }
 
 impl PowerManagementProvider {
-  #[expect(clippy::new_without_default)]
   pub fn new() -> Self {
     Self {
       matches: Vec::new(),

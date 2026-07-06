@@ -7,7 +7,7 @@ use iced::{
 };
 use n16_core::theme::{self, Base16Theme};
 
-use crate::{
+use crate::launcher::{
   Providers,
   component::{
     provider_section,

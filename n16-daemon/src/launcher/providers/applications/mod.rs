@@ -9,7 +9,7 @@ use xdg::BaseDirectories;
 use icon_theme::get_icon_themes;
 use icons::get_icon;
 
-use crate::providers::{
+use crate::launcher::providers::{
   ExecutionFinishAction, Match, MatchIcon, Provider, ProviderInfo, ProviderType,
 };
 
@@ -92,15 +92,6 @@ pub fn get_application_info() -> Vec<ApplicationInfo> {
 
 pub struct ApplicationProvider {
   application_info: Vec<ApplicationInfo>,
-}
-
-impl ApplicationProvider {
-  #[expect(clippy::new_without_default)]
-  pub fn new() -> Self {
-    Self {
-      application_info: Vec::new(),
-    }
-  }
 }
 
 #[async_trait]

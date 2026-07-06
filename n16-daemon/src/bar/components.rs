@@ -1,6 +1,6 @@
 use n16_core::theme::Base16Theme;
 
-use crate::Message;
+use crate::bar::Message;
 
 pub mod clock;
 

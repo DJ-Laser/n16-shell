@@ -1,7 +1,6 @@
 use std::io;
 use std::path::Path;
 
-use n16_core::application::ApplicationRequest;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{UnixListener, UnixStream};
 
@@ -9,6 +8,8 @@ use futures_lite::{Stream, StreamExt};
 
 use n16_ipc::{Reply, Request};
 use tokio_stream::wrappers::UnixListenerStream;
+
+use crate::application::ApplicationRequest;
 
 type RequestSender = async_channel::Sender<ApplicationRequest<Request>>;
 
