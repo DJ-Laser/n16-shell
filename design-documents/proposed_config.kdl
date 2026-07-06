@@ -1,0 +1,74 @@
+theme {
+  colors {
+    base00 0x1d1f21
+    base01 "#282a2e"
+    base02 "373b41"
+    base03 0x969896
+    /* ... */
+  }
+
+  /* theme settings */
+}
+
+general {
+  // Many plugins may need to open a terminal, so centralize the config
+  terminal command="alacritty -e {cmd}"
+
+  /* general settings */
+}
+
+launcher {
+  // General example of configuration for plugin calabilities
+  providers {
+    // plugin_name:capability_name specifies the cabability to configure and it's source plugin
+    // args are configuration managed/defined by n16 itself
+    n16:applications section-name="My Apps" {
+      // child nodes are configuration for the provider (managed/defined by the plugin)
+      include-app-descriptions #true
+    }
+
+    n16:power-management
+    n16:calculator priority=1000
+
+    nix:nix-shell section-name="Nix Shell"
+
+    // A provider can be added multiple times
+    nix:nix-shell section-name="Nix Shell (unstable)" {
+      default_nixpkgs_channel "nixos-unstable"
+    }
+  }
+
+  /* launcher settings */
+}
+
+bar {
+  // Bar widgets config
+  // Configuration for plugin capabilities like launcher providers
+  // Widgets will be placed in top-to-bottom order, starting on the left
+  widgets {
+    n16:launcher_button left
+
+    niri-plugin:workspaces center {
+      show-empty-workspaces #true
+    }
+
+    tray-plugin:system-tray right
+    n16:clock right
+  }
+  position: "bottom"
+
+  center-placement "monitor-center" // "space-between"
+
+  /* bar settings */
+}
+
+// plugin list
+// Configured just like launcher and bar capabilities
+plugins {
+  // Plugins can define configuration for the plugin as a whole.
+  nix {
+    nix-binary "/path/to/nix/binary"
+  }
+  niri-plugin
+  tray-plugin
+}
