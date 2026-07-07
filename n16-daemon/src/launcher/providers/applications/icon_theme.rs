@@ -67,9 +67,8 @@ fn find_theme_directories(theme_directory: &Path) -> Option<IconTheme> {
   let directory_name = theme_directory.file_name()?.to_str()?.to_string();
 
   for entry in fs::read_dir(theme_directory).ok()? {
-    let entry = match entry {
-      Ok(entry) => entry,
-      Err(_) => continue,
+    let Ok(entry) = entry else {
+      continue;
     };
 
     // Only process directories with the "apps" subfolder
@@ -103,17 +102,17 @@ fn find_theme_directories(theme_directory: &Path) -> Option<IconTheme> {
 
     let mut chars = entry_name.chars();
 
-    let width: String = chars.by_ref().take_while(|c| c.is_ascii_digit()).collect();
+    let width: String = chars.by_ref().take_while(char::is_ascii_digit).collect();
     let width: i32 = width.parse().ok()?;
 
-    let height: String = chars.by_ref().take_while(|c| c.is_ascii_digit()).collect();
+    let height: String = chars.by_ref().take_while(char::is_ascii_digit).collect();
     let height: i32 = height.parse().ok()?;
 
-    let scale: String = chars.by_ref().take_while(|c| c.is_ascii_digit()).collect();
-    let scale = if !scale.is_empty() {
-      scale.parse().ok()?
-    } else {
+    let scale: String = chars.by_ref().take_while(char::is_ascii_digit).collect();
+    let scale = if scale.is_empty() {
       1
+    } else {
+      scale.parse().ok()?
     };
 
     if width != height {
@@ -133,7 +132,7 @@ fn find_theme_directories(theme_directory: &Path) -> Option<IconTheme> {
 
   if directories.is_empty() {
     return None;
-  };
+  }
 
   let mut inherits = Vec::new();
   if directory_name != FALLBACK_THEME {
@@ -148,10 +147,8 @@ fn find_theme_directories(theme_directory: &Path) -> Option<IconTheme> {
 }
 
 fn parse_theme_index(theme_directory: &Path) -> Option<IconTheme> {
-  let theme_index = match Ini::from_file(&theme_directory.join("index.theme")) {
-    Ok(theme_index) => theme_index,
-    // If there was no index.theme, find directories by their name
-    Err(_) => return find_theme_directories(theme_directory),
+  let Ok(theme_index) = Ini::from_file(&theme_directory.join("index.theme")) else {
+    return find_theme_directories(theme_directory);
   };
 
   let directory_name = theme_directory.file_name()?.to_str()?.to_string();
@@ -212,9 +209,7 @@ fn get_icon_theme_dirs(icons_dir: &Path) -> io::Result<Vec<PathBuf>> {
   let files = fs::read_dir(icons_dir)?;
 
   for entry in files.into_iter().flatten() {
-    let is_dir = fs::metadata(entry.path())
-      .map(|f| f.is_dir())
-      .unwrap_or(false);
+    let is_dir = fs::metadata(entry.path()).is_ok_and(|f| f.is_dir());
     if is_dir {
       theme_dirs.push(entry.path());
     }
@@ -227,9 +222,8 @@ pub fn get_icon_themes(data_dirs: &Vec<PathBuf>) -> HashMap<String, IconTheme> {
   let mut themes: HashMap<String, IconTheme> = HashMap::new();
 
   for data_dir in data_dirs {
-    let theme_dirs = match get_icon_theme_dirs(&data_dir.join("icons")) {
-      Ok(theme_dirs) => theme_dirs,
-      Err(_) => continue,
+    let Ok(theme_dirs) = get_icon_theme_dirs(&data_dir.join("icons")) else {
+      continue;
     };
 
     for theme_dir in theme_dirs {

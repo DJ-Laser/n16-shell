@@ -21,18 +21,10 @@ pub struct ApplicationInfo {
   name: String,
   icon: Option<MatchIcon>,
   command: Option<String>,
-
-  #[expect(unused)]
-  desktop_file: PathBuf,
 }
 
 impl ApplicationInfo {
-  pub fn new(
-    name: String,
-    icon: Option<PathBuf>,
-    command: Option<String>,
-    desktop_file: PathBuf,
-  ) -> Self {
+  pub fn new(name: String, icon: Option<PathBuf>, command: Option<String>) -> Self {
     Self {
       name,
       icon: icon.map(|icon_path| {
@@ -43,7 +35,6 @@ impl ApplicationInfo {
         }
       }),
       command,
-      desktop_file,
     }
   }
 }
@@ -84,7 +75,6 @@ pub fn get_application_info() -> Vec<ApplicationInfo> {
         name.to_string(),
         icon,
         exec.map(str::to_string),
-        entry.path.to_owned(),
       ))
     })
     .collect()
@@ -134,6 +124,10 @@ impl Provider for ApplicationProvider {
   }
 
   async fn execute_match(&self, selected_match: Match) -> ExecutionFinishAction {
+    #[expect(
+      clippy::cast_possible_truncation,
+      reason = "Ids come from array index, which is usize"
+    )]
     let Some(application_info) = self.application_info.get(selected_match.id as usize) else {
       return ExecutionFinishAction::Close;
     };
@@ -155,7 +149,7 @@ impl Provider for ApplicationProvider {
       .spawn()
     {
       eprintln!("{error}");
-    };
+    }
 
     ExecutionFinishAction::Close
   }

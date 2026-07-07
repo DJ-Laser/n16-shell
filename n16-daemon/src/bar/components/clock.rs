@@ -2,13 +2,13 @@ use std::fmt::Display;
 
 use chrono::TimeZone;
 use iced::{
-  widget::{container, text},
   Length,
+  widget::{container, text},
 };
 
 use super::Component;
 
-pub fn view<Tz: TimeZone>(time: chrono::DateTime<Tz>) -> impl Into<Component>
+pub fn view<Tz: TimeZone>(time: &chrono::DateTime<Tz>) -> impl Into<Component>
 where
   Tz::Offset: Display,
 {

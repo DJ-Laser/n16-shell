@@ -33,5 +33,19 @@ itertools = "0.15.0"
 git-version = "0.3.9"
 rustix = { version = "1.1.2", features = ["process"]}
 
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
 [workspace.lints.clippy]
-pedantic = "warn"
+allow_attributes = "warn"
+allow_attributes_without_reason = "warn"
+clone_on_ref_ptr = "warn"
+empty_enum_variants_with_brackets = "warn"
+empty_structs_with_brackets = "warn"
+exit = "deny"
+infinite_loop = "deny"
+
+pedantic = { level = "warn", priority = -1 }
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"

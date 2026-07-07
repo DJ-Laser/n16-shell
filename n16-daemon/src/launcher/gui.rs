@@ -69,6 +69,10 @@ impl Launcher {
     )
   }
 
+  #[expect(
+    clippy::unused_self,
+    reason = "Method is expected to use self in the future"
+  )]
   fn scroll_to_selected(&self) -> Task<Message> {
     Task::none() //operation::scroll_to(id, offset)
   }
@@ -78,18 +82,18 @@ impl Launcher {
     self.query.push_str(new_query);
     self.selected_idx = (0, 0);
 
-    if !self.query.is_empty() {
-      let query = self.query.clone();
-      Task::stream(self.providers.get_dynamic_matches(query.clone()))
-        .map(move |matches| Message::UpdateDynamicMatches(query.clone(), matches))
-    } else {
-      for info in self.provider_info.iter() {
+    if self.query.is_empty() {
+      for info in &self.provider_info {
         if matches!(info.provider_type, ProviderType::Dynamic) {
           self.matches.remove(&info.id);
         }
       }
 
       Task::none()
+    } else {
+      let query = self.query.clone();
+      Task::stream(self.providers.get_dynamic_matches(query.clone()))
+        .map(move |matches| Message::UpdateDynamicMatches(query.clone(), matches))
     }
   }
 
@@ -112,7 +116,7 @@ impl Launcher {
       curr_idx_0 -= 1;
 
       match self.get_num_matches(&self.provider_info[curr_idx_0].id) {
-        0 => continue,
+        0 => (),
         idx_1_len => return (curr_idx_0, idx_1_len - 1),
       }
     }
@@ -139,7 +143,7 @@ impl Launcher {
       }
 
       match self.get_num_matches(&self.provider_info[curr_idx_0].id) {
-        0 => continue,
+        0 => (),
         _ => return (curr_idx_0, 0),
       }
     }
@@ -305,6 +309,10 @@ impl Launcher {
       .into()
   }
 
+  #[expect(
+    clippy::unused_self,
+    reason = "Method is expected to use self in the future"
+  )]
   pub fn subscription(&self, window_id: iced::window::Id) -> Subscription<Message> {
     iced::event::listen_with(|event, _, id| {
       (match event {

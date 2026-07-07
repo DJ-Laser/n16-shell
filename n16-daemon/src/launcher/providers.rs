@@ -108,7 +108,7 @@ impl Providers {
 
   pub fn get_static_matches(&mut self) -> impl Stream<Item = Matches> + use<> {
     let (matches_tx, matches_rx) = async_channel::unbounded();
-    let providers = self.providers.clone();
+    let providers = Arc::clone(&self.providers);
     tokio::spawn(async move {
       for (info, provider) in providers.values() {
         if matches!(info.provider_type, ProviderType::Static) {
@@ -125,7 +125,7 @@ impl Providers {
 
   pub fn get_dynamic_matches(&mut self, query: String) -> impl Stream<Item = Matches> + use<> {
     let (matches_tx, matches_rx) = async_channel::unbounded();
-    let providers = self.providers.clone();
+    let providers = Arc::clone(&self.providers);
     tokio::spawn(async move {
       for (info, provider) in providers.values() {
         if matches!(info.provider_type, ProviderType::Dynamic) {
@@ -145,7 +145,7 @@ impl Providers {
     (id, selected_match): (String, Match),
   ) -> impl Future<Output = Option<ExecutionFinishAction>> + use<> {
     let (action_tx, action_rx) = async_channel::unbounded();
-    let providers = self.providers.clone();
+    let providers = Arc::clone(&self.providers);
     tokio::spawn(async move {
       let Some((_, provider)) = providers.get(&id) else {
         let _ = action_tx.send(None).await;

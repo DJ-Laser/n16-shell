@@ -18,7 +18,7 @@ impl<R: Debug> ApplicationRequest<R> {
 
   pub fn reply(self, reply: impl Into<n16_ipc::Reply>) {
     if let Err(error) = self.reply_tx.try_send(reply.into()) {
-      eprintln!("Error handling request {:?}: {}", self.request, error)
+      eprintln!("Error handling request {:?}: {}", self.request, error);
     }
   }
 

@@ -13,3 +13,6 @@ async-channel.workspace = true
 
 knus.workspace = true
 miette = { version="7.6.0", features=["fancy"] }
+
+[lints]
+workspace = true

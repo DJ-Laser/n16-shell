@@ -20,3 +20,6 @@ n16-ipc.workspace = true
 
 clap = { version = "4.5.30", features = ["derive"] }
 clap_complete = "4.5.48"
+
+[lints]
+workspace = true

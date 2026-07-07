@@ -35,7 +35,7 @@ pub fn view(
   }
 
   row = row.push(
-    text(match_entry.title.to_string())
+    text(match_entry.title.clone())
       .align_y(alignment::Vertical::Center)
       .height(image_size)
       .size(font_size),

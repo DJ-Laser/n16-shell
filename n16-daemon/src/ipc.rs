@@ -37,7 +37,7 @@ pub fn run_ipc_server() -> impl Stream<Item = ApplicationRequest<Request>> {
 
         tokio::spawn(async move {
           if let Err(err) = handle_stream(stream, &mut output).await {
-            println!("Error creating stream: {:?}", err)
+            println!("Error creating stream: {err}");
           }
         });
       })

@@ -9,11 +9,11 @@ pub fn main() {
 
   match cli.command {
     cli::Command::Launcher(launcher) => {
-      send_request_ok(launcher.request());
+      send_request_ok(&launcher.request());
     }
 
     cli::Command::Bar(bar) => {
-      send_request_ok(bar.request());
+      send_request_ok(&bar.request());
     }
-  };
+  }
 }

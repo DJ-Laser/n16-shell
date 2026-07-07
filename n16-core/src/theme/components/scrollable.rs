@@ -1,3 +1,4 @@
+use iced::widget::container;
 use iced::widget::scrollable::{AutoScroll, Catalog, Rail, Scroller, Status, Style, StyleFn};
 use iced::{Background, Color, Shadow, Vector, border};
 
@@ -31,10 +32,10 @@ impl Catalog for Base16Theme {
       };
 
       Style {
-        container: Default::default(),
+        container: container::Style::default(),
         vertical_rail: scrollbar,
         horizontal_rail: scrollbar,
-        gap: Default::default(),
+        gap: None,
         auto_scroll,
       }
     })

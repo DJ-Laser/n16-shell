@@ -1,6 +1,6 @@
 //! Ipc helpers for interfacting with the n16 daemon
 //!
-//! Inspired by https://crates.io/crates/niri-ipc
+//! Inspired by <https://crates.io/crates/niri-ipc>
 //!
 //! Communication is done via unix socket. Requests and responses are both sent as json.
 
@@ -36,14 +36,11 @@ fn read_socket_path() -> String {
   });
 
   let wayland_socket = std::env::var("WAYLAND_DISPLAY");
-  let display = match wayland_socket.as_ref() {
-    // If wayland_socket is a path, only use the last component
-    Ok(wayland_socket) => wayland_socket.rsplit('/').next().unwrap(),
-
-    Err(_) => {
-      eprintln!("WARNING: WAYLAND_DISPLAY variable not set. Defaulting to wayland-0");
-      "wayland-0.sock"
-    }
+  let display = if let Ok(wayland_socket) = wayland_socket.as_ref() {
+    wayland_socket.rsplit('/').next().unwrap()
+  } else {
+    eprintln!("WARNING: WAYLAND_DISPLAY variable not set. Defaulting to wayland-0");
+    "wayland-0.sock"
   };
 
   format!("{runtime_path}/n16-shell-{display}.sock")

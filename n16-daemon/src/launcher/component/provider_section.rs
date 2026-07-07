@@ -9,9 +9,9 @@ pub fn view(
   selected: Option<usize>,
   on_press: impl Fn(usize) -> crate::launcher::gui::Message,
 ) -> impl Into<Component> {
-  let mut matches_veiw = column![text(provider_info.name.to_string())];
+  let mut matches_veiw = column![text(provider_info.name.clone())];
 
-  for (idx, match_entry) in matches.into_iter() {
+  for (idx, match_entry) in matches {
     let is_selected: bool = selected.is_some_and(|s| s == idx);
     matches_veiw = matches_veiw.push(match_entry::view(match_entry, is_selected, on_press(idx)));
   }

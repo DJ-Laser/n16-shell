@@ -6,7 +6,7 @@ use std::{
 
 use n16_ipc::{Reply, Request};
 
-pub fn send_request(request: Request) -> io::Result<Reply> {
+pub fn send_request(request: &Request) -> io::Result<Reply> {
   let mut stream = UnixStream::connect(n16_ipc::socket_path())?;
 
   let mut buf = serde_json::to_vec(&request)?;
@@ -26,6 +26,6 @@ pub fn send_request(request: Request) -> io::Result<Reply> {
   Ok(reply)
 }
 
-pub fn send_request_ok(request: Request) {
+pub fn send_request_ok(request: &Request) {
   send_request(request).unwrap().unwrap();
 }

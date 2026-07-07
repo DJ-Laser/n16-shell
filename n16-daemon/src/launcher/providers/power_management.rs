@@ -93,7 +93,7 @@ impl PowerManagementProvider {
         id: action as u64,
       }
     })
-    .into()
+    .into();
   }
 }
 
@@ -138,8 +138,8 @@ impl Provider for PowerManagementProvider {
       .args(&command[1..])
       .spawn()
     {
-      eprintln!("{error}")
-    };
+      eprintln!("{error}");
+    }
 
     ExecutionFinishAction::Close
   }

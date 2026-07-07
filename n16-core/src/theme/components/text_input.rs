@@ -31,11 +31,7 @@ pub fn base(theme: &Base16Theme, status: Status) -> Style {
 
   match status {
     Status::Active => active,
-    Status::Hovered => Style {
-      border: Border { ..active.border },
-      ..active
-    },
-    Status::Focused { .. } => Style {
+    Status::Hovered | Status::Focused { .. } => Style {
       border: Border { ..active.border },
       ..active
     },

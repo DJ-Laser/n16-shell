@@ -22,7 +22,7 @@ impl Base for Base16Theme {
     None
   }
 
-  fn name(&self) -> &str {
+  fn name(&self) -> &'static str {
     "Base16 Theme"
   }
 }

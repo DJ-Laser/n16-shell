@@ -40,11 +40,6 @@ impl Response {
     serde_json::to_string(&self).unwrap()
   }
 
-  /// Convert this `Response` to Reply::Ok()
-  pub fn reply_ok(self) -> Reply {
-    Reply::Ok(self)
-  }
-
   /// Creates a `Response::Version()` containing `niri_ipc::VERSION_STRING`
   pub fn version() -> Self {
     Self::Version(crate::version())
@@ -62,6 +57,6 @@ pub type Reply = Result<Response, String>;
 
 impl From<Response> for Reply {
   fn from(value: Response) -> Self {
-    value.reply_ok()
+    Reply::Ok(value)
   }
 }

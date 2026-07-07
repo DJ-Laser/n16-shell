@@ -26,3 +26,6 @@ xdg = "3.0.0"
 fend-core = "1.5.6"
 
 chrono = "0.4.39"
+
+[lints]
+workspace = true

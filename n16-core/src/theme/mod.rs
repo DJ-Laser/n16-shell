@@ -5,8 +5,8 @@ pub use components::*;
 mod components;
 mod serialize;
 
+#[expect(non_snake_case, reason = "struct fields follow base16 naming scheme")]
 #[derive(Debug, Clone, PartialEq)]
-#[expect(non_snake_case)]
 pub struct Base16Theme {
   pub base00: Color,
   pub base01: Color,
@@ -26,6 +26,7 @@ pub struct Base16Theme {
   pub base0F: Color,
 }
 
+#[expect(clippy::unreadable_literal, reason = "Hex codes")]
 pub const DEFAULT_THEME: Base16Theme = Base16Theme {
   base00: color!(0x1d1f21),
   base01: color!(0x282a2e),

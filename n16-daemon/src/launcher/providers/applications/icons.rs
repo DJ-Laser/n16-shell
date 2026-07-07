@@ -12,9 +12,8 @@ fn find_icon_in_dir(icon_name: &str, dir: &Path) -> io::Result<Option<PathBuf>> 
   for entry in fs::read_dir(dir)? {
     let path = entry?.path();
 
-    let file_stem = match path.file_stem() {
-      Some(file_stem) => file_stem,
-      None => return Ok(None),
+    let Some(file_stem) = path.file_stem() else {
+      return Ok(None);
     };
 
     if file_stem == icon_name {
@@ -37,9 +36,8 @@ fn get_icon_for_theme<'s>(
     let mut best_size_delta = i32::MAX;
 
     for size_dir in icon_theme.directories() {
-      let icon = match find_icon_in_dir(icon_name, size_dir.full_path()) {
-        Ok(Some(icon)) => icon,
-        Ok(None) | Err(_) => continue,
+      let Ok(Some(icon)) = find_icon_in_dir(icon_name, size_dir.full_path()) else {
+        continue;
       };
 
       let size_delta = match size_dir.icon_type() {
@@ -108,7 +106,7 @@ pub fn get_icon(
 ) -> Option<PathBuf> {
   let icon_name = entry.icon()?;
 
-  if icon_name.starts_with("/") {
+  if icon_name.starts_with('/') {
     // Icon entry is an absolute path to the icon file
     return Some(PathBuf::from(icon_name));
   }
@@ -120,10 +118,9 @@ pub fn get_icon(
   }
 
   // Use icons in the pixmaps dir as a fallback
-  for data_dir in data_dirs.iter() {
-    let icon = match find_icon_in_dir(icon_name, &data_dir.join("pixmaps")) {
-      Ok(Some(icon)) => icon,
-      Ok(None) | Err(_) => continue,
+  for data_dir in data_dirs {
+    let Ok(Some(icon)) = find_icon_in_dir(icon_name, &data_dir.join("pixmaps")) else {
+      continue;
     };
 
     return Some(icon);

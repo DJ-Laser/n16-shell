@@ -32,6 +32,10 @@ pub struct Bar {
 }
 
 impl Bar {
+  #[expect(
+    clippy::unused_self,
+    reason = "Method is expected to use self in the future"
+  )]
   fn handle_request(&mut self, request: ApplicationRequest<Request>) -> Task<Message> {
     match request.kind() {
       Request::Show => {
@@ -104,12 +108,16 @@ impl Bar {
   pub fn view(&self, _id: window::Id) -> iced::Element<'_, Message, theme::Base16Theme> {
     row![
       Space::new().width(Length::Fill),
-      clock::view(self.now).into()
+      clock::view(&self.now).into()
     ]
     .padding(5)
     .into()
   }
 
+  #[expect(
+    clippy::unused_self,
+    reason = "Method is expected to use self in the future"
+  )]
   pub fn subscription(&self) -> Subscription<Message> {
     time::every(time::Duration::from_millis(500))
       .map(|_| Message::Tick(chrono::offset::Local::now()))

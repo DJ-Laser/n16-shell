@@ -19,7 +19,6 @@ pub fn find_config_file() -> Option<PathBuf> {
   };
 
   config_dir.push("n16-shell/config.kdl");
-  println!("{:?}", config_dir);
   Some(config_dir)
 }
 
@@ -36,7 +35,7 @@ pub fn load_config_file() -> Option<Config> {
   match config {
     Ok(config) => Some(config),
     Err(error) => {
-      eprintln!("{:?}", miette::Report::new(error));
+      eprintln!("{}", miette::Report::new(error));
       None
     }
   }
