@@ -1,0 +1,54 @@
+// Unique plugin id
+// Author id / plugin id (alphanumeric no spaces)
+id "dj_laser/my-plugin"
+// Translation key for plugin name
+// Falls back to id if not translated for the user's locale
+name-key "plugin:name"
+description-key "plugin:description"
+// Plugin version
+version "1.0.0"
+// Version of n16 the plugin expects
+// n16 version may not be below this, or a higher major version
+n16-version "2.3.5"
+// Plugin author's name
+author-name "My Name"
+
+settings {
+  // Setting id, children configure the setting
+  enable_foobar {
+    // Translation keys for name/description
+    label-key "settings:enable_foobar"
+    description-key "settings:enable_foobar.description"
+    type boolean
+    default #true
+  }
+
+  number {
+    // Translation keys for name/description
+    label-key "settings:number"
+    description-key "settings:number.description"
+    type int
+    default 0
+
+    // Numeric types can specify a range
+    range -10 10
+  }
+}
+
+launcher-providers {
+  // Capability (provider) id, children define cabability specific settings
+  my-provider {
+    search-namespace {
+      // Translation keys for name/description
+      label-key "settings:provider-search-namespace"
+      description-key "settings:provider-search-namespace.desc"
+      type string
+      default "Default Namespace"
+    }
+  }
+}
+
+bar-widgets {
+  // my-bar-widget does not define any settings
+  my-bar-widget
+}
