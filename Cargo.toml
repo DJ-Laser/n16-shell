@@ -8,7 +8,7 @@ members = [
   "n16-core",
   "n16-daemon",
   "n16-cli"
-]
+, "n16-plugin-interface"]
 
 resolver = "3"
 

@@ -1,0 +1,10 @@
+[package]
+name = "n16-plugin-interface"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde.workspace = true
+
+[lints]
+workspace = true

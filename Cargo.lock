@@ -2677,6 +2677,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "n16-plugin-interface"
+version = "0.1.1"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "naga"
 version = "27.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
